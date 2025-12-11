@@ -318,26 +318,79 @@ function AdminPanel({ user }) {
             marginBottom: '12px',
             border: '1px solid var(--border-color)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <strong>{match.player1Name} vs {match.player2Name}</strong>
-                {match.confirmed && (
-                  <span style={{ marginLeft: '10px', color: 'var(--accent-primary)' }}>
-                    ✓ {match.player1Legs}:{match.player2Legs}
+            <div style={{ marginBottom: '12px' }}>
+              <strong style={{ fontSize: '16px' }}>{match.player1Name} vs {match.player2Name}</strong>
+              
+              {match.confirmed && (
+                <div style={{ marginTop: '8px' }}>
+                  <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '18px' }}>
+                    ✓ Bestätigt: {match.player1Legs}:{match.player2Legs}
                   </span>
-                )}
-                {!match.confirmed && (match.player1Submitted || match.player2Submitted) && (
-                  <span style={{ marginLeft: '10px', color: '#ed8936' }}>⏳ Ausstehend</span>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button className="btn btn-secondary" onClick={() => handleResetMatch(match.id)}>
-                  Zurücksetzen
-                </button>
-                <button className="btn btn-danger" onClick={() => handleDeleteMatch(match.id)}>
-                  Löschen
-                </button>
-              </div>
+                </div>
+              )}
+              
+              {!match.confirmed && (match.player1Submitted || match.player2Submitted) && (
+                <div style={{ marginTop: '12px', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
+                  <p style={{ color: '#ed8936', fontWeight: 'bold', marginBottom: '8px' }}>⏳ Ausstehende Bestätigung</p>
+                  
+                  {match.player1Submitted && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong style={{ color: 'var(--accent-primary)' }}>{match.player1Name}:</strong>
+                      <span style={{ marginLeft: '8px', color: 'var(--text-primary)' }}>
+                        {match.player1Legs}:{match.player2Legs}
+                      </span>
+                      {match.player1Stats && (
+                        <span style={{ marginLeft: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          (SL: {match.player1Stats.shortlegs}, 180: {match.player1Stats.oneEighties}, 
+                          HF: {match.player1Stats.highFinish}, Avg: {match.player1Stats.bestOfTen})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {match.player2Submitted && (
+                    <div>
+                      <strong style={{ color: 'var(--accent-primary)' }}>{match.player2Name}:</strong>
+                      <span style={{ marginLeft: '8px', color: 'var(--text-primary)' }}>
+                        {match.player2LegsSubmitted}:{match.player1LegsSubmitted}
+                      </span>
+                      {match.player2Stats && (
+                        <span style={{ marginLeft: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          (SL: {match.player2Stats.shortlegs}, 180: {match.player2Stats.oneEighties}, 
+                          HF: {match.player2Stats.highFinish}, Avg: {match.player2Stats.bestOfTen})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {match.player1Submitted && match.player2Submitted && (
+                    <div style={{ marginTop: '8px', padding: '8px', background: 'var(--accent-dart)', borderRadius: '6px' }}>
+                      <strong style={{ color: 'white' }}>⚠️ Ergebnisse stimmen nicht überein!</strong>
+                      <p style={{ color: 'white', fontSize: '13px', marginTop: '4px' }}>
+                        {match.player1Name}: {match.player1Legs}:{match.player2Legs} | 
+                        {match.player2Name}: {match.player2LegsSubmitted}:{match.player1LegsSubmitted}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {!match.player1Submitted && !match.player2Submitted && (
+                <div style={{ marginTop: '8px' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                    ⏸️ Noch keine Eingaben
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button className="btn btn-secondary" onClick={() => handleResetMatch(match.id)}>
+                Zurücksetzen
+              </button>
+              <button className="btn btn-danger" onClick={() => handleDeleteMatch(match.id)}>
+                Löschen
+              </button>
             </div>
           </div>
         ))}
