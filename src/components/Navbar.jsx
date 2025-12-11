@@ -10,7 +10,7 @@ function Navbar({ user }) {
   return (
     <nav style={styles.nav}>
       <div className="container" style={styles.navContent}>
-        <h1 style={styles.logo}>🎯 Scolia Dart Liga</h1>
+        <h1 style={styles.logo}>Scolia Dart Liga</h1>
         <div style={styles.navLinks}>
           <Link to="/" style={styles.link}>Tabelle</Link>
           <Link to="/spieltage" style={styles.link}>Spieltage</Link>

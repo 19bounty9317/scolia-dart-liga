@@ -28,7 +28,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename="/scolia-dart-liga">
       {user && <Navbar user={user} />}
       <Routes>
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
