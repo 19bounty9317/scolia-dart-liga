@@ -12,6 +12,8 @@ function AdminPanel({ user }) {
   const [player1, setPlayer1] = useState('')
   const [player2, setPlayer2] = useState('')
   const [selectedMatchday, setSelectedMatchday] = useState('')
+  const [matches, setMatches] = useState([])
+  const [editingMatchday, setEditingMatchday] = useState(null)
 
   useEffect(() => {
     checkAdmin()
@@ -44,7 +46,22 @@ function AdminPanel({ user }) {
     matchdaysSnap.forEach(doc => {
       matchdaysData.push({ id: doc.id, ...doc.data() })
     })
-    setMatchdays(matchdaysData)
+    setMatchdays(matchdaysData.sort((a, b) => b.week - a.week))
+    
+    const matchesSnap = await getDocs(collection(db, 'matches'))
+    const matchesData = []
+    for (const mDoc of matchesSnap.docs) {
+      const match = mDoc.data()
+      const p1Doc = await getDoc(doc(db, 'players', match.player1Id))
+      const p2Doc = await getDoc(doc(db, 'players', match.player2Id))
+      matchesData.push({
+        id: mDoc.id,
+        ...match,
+        player1Name: p1Doc.data()?.name || 'Unbekannt',
+        player2Name: p2Doc.data()?.name || 'Unbekannt'
+      })
+    }
+    setMatches(matchesData)
   }
 
   const handleCreateMatchday = async () => {
@@ -127,9 +144,24 @@ function AdminPanel({ user }) {
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
-        <button className="btn btn-primary" onClick={handleCreateMatchday}>
-          Spieltag erstellen (Mo-So)
-        </button>
+        {!editingMatchday ? (
+          <button className="btn btn-primary" onClick={handleCreateMatchday}>
+            Spieltag erstellen (Mo-So)
+          </button>
+        ) : (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn btn-primary" onClick={handleUpdateMatchday}>
+              Spieltag aktualisieren
+            </button>
+            <button className="btn btn-secondary" onClick={() => {
+              setEditingMatchday(null)
+              setWeek('')
+              setDate('')
+            }}>
+              Abbrechen
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -156,8 +188,154 @@ function AdminPanel({ user }) {
           Spiel erstellen
         </button>
       </div>
+
+      <div className="card">
+        <h3>Spieltage verwalten</h3>
+        {matchdays.map(md => (
+          <div key={md.id} style={{ 
+            padding: '16px', 
+            background: 'var(--bg-secondary)', 
+            borderRadius: '12px', 
+            marginBottom: '12px',
+            border: '1px solid var(--border-color)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>Woche {md.week}</strong>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
+                  {new Date(md.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(md.endDate?.seconds * 1000).toLocaleDateString('de-DE')}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" onClick={() => handleEditMatchday(md)}>
+                  Bearbeiten
+                </button>
+                <button className="btn btn-danger" onClick={() => handleDeleteMatchday(md.id)}>
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h3>Spiele verwalten</h3>
+        {matches.map(match => (
+          <div key={match.id} style={{ 
+            padding: '16px', 
+            background: 'var(--bg-secondary)', 
+            borderRadius: '12px', 
+            marginBottom: '12px',
+            border: '1px solid var(--border-color)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <strong>{match.player1Name} vs {match.player2Name}</strong>
+                {match.confirmed && (
+                  <span style={{ marginLeft: '10px', color: 'var(--accent-primary)' }}>
+                    ✓ {match.player1Legs}:{match.player2Legs}
+                  </span>
+                )}
+                {!match.confirmed && (match.player1Submitted || match.player2Submitted) && (
+                  <span style={{ marginLeft: '10px', color: '#ed8936' }}>⏳ Ausstehend</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button className="btn btn-secondary" onClick={() => handleResetMatch(match.id)}>
+                  Zurücksetzen
+                </button>
+                <button className="btn btn-danger" onClick={() => handleDeleteMatch(match.id)}>
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
 export default AdminPanel
+
+  const handleDeleteMatch = async (matchId) => {
+    if (!confirm('Spiel wirklich löschen?')) return
+    try {
+      await deleteDoc(doc(db, 'matches', matchId))
+      alert('Spiel gelöscht!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Löschen!')
+    }
+  }
+
+  const handleDeleteMatchday = async (matchdayId) => {
+    if (!confirm('Spieltag wirklich löschen? Alle Spiele werden ebenfalls gelöscht!')) return
+    try {
+      // Delete all matches of this matchday
+      const matchesToDelete = matches.filter(m => m.matchdayId === matchdayId)
+      for (const match of matchesToDelete) {
+        await deleteDoc(doc(db, 'matches', match.id))
+      }
+      // Delete matchday
+      await deleteDoc(doc(db, 'matchdays', matchdayId))
+      alert('Spieltag und alle Spiele gelöscht!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Löschen!')
+    }
+  }
+
+  const handleEditMatchday = (matchday) => {
+    setEditingMatchday(matchday)
+    setWeek(matchday.week.toString())
+    setDate(new Date(matchday.startDate.seconds * 1000).toISOString().split('T')[0])
+  }
+
+  const handleUpdateMatchday = async () => {
+    if (!editingMatchday || !week || !date) return
+    try {
+      const startDate = new Date(date)
+      const endDate = new Date(startDate)
+      endDate.setDate(endDate.getDate() + 6)
+      
+      await updateDoc(doc(db, 'matchdays', editingMatchday.id), {
+        week: parseInt(week),
+        startDate: startDate,
+        endDate: endDate
+      })
+      alert('Spieltag aktualisiert!')
+      setEditingMatchday(null)
+      setWeek('')
+      setDate('')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Aktualisieren!')
+    }
+  }
+
+  const handleResetMatch = async (matchId) => {
+    if (!confirm('Spiel zurücksetzen? Alle Eingaben werden gelöscht!')) return
+    try {
+      await updateDoc(doc(db, 'matches', matchId), {
+        player1Legs: 0,
+        player2Legs: 0,
+        player1Submitted: false,
+        player2Submitted: false,
+        confirmed: false,
+        player1Stats: null,
+        player2Stats: null,
+        player1LegsSubmitted: 0,
+        player2LegsSubmitted: 0
+      })
+      alert('Spiel zurückgesetzt!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Zurücksetzen!')
+    }
+  }

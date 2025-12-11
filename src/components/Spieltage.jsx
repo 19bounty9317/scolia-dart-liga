@@ -8,6 +8,12 @@ function Spieltage({ user }) {
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [player1Legs, setPlayer1Legs] = useState('')
   const [player2Legs, setPlayer2Legs] = useState('')
+  const [stats, setStats] = useState({
+    shortlegs: 0,
+    oneEighties: 0,
+    highFinish: 0,
+    bestOfTen: 0
+  })
 
   useEffect(() => {
     loadMatchdays()
@@ -87,7 +93,21 @@ function Spieltage({ user }) {
         await updateDoc(matchRef, {
           player1Legs: legs1,
           player2Legs: legs2,
-          player1Submitted: true
+          player1Submitted: true,
+          player1Stats: stats
+        })
+        
+        // Update player stats
+        const playerRef = doc(db, 'players', user.uid)
+        const playerDoc = await getDoc(playerRef)
+        const currentStats = playerDoc.data().stats || {}
+        await updateDoc(playerRef, {
+          stats: {
+            shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
+            oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
+            highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
+            bestOfTen: Math.max(currentStats.bestOfTen || 0, stats.bestOfTen)
+          }
         })
       } else {
         if (currentData.player2Submitted) {
@@ -97,7 +117,21 @@ function Spieltage({ user }) {
         await updateDoc(matchRef, {
           player2LegsSubmitted: legs1,
           player1LegsSubmitted: legs2,
-          player2Submitted: true
+          player2Submitted: true,
+          player2Stats: stats
+        })
+        
+        // Update player stats
+        const playerRef = doc(db, 'players', user.uid)
+        const playerDoc = await getDoc(playerRef)
+        const currentStats = playerDoc.data().stats || {}
+        await updateDoc(playerRef, {
+          stats: {
+            shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
+            oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
+            highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
+            bestOfTen: Math.max(currentStats.bestOfTen || 0, stats.bestOfTen)
+          }
         })
       }
       
@@ -119,6 +153,7 @@ function Spieltage({ user }) {
       setSelectedMatch(null)
       setPlayer1Legs('')
       setPlayer2Legs('')
+      setStats({ shortlegs: 0, oneEighties: 0, highFinish: 0, bestOfTen: 0 })
       loadMatchdays()
     } catch (err) {
       console.error('Fehler beim Eintragen des Ergebnisses:', err)
@@ -221,6 +256,46 @@ function Spieltage({ user }) {
               onChange={(e) => setPlayer2Legs(e.target.value)}
               min="0"
               max="10"
+            />
+            
+            <h4 style={{ marginTop: '20px', marginBottom: '10px', color: 'var(--accent-primary)' }}>
+              Deine Statistiken in diesem Spiel
+            </h4>
+            
+            <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Shortlegs</label>
+            <input
+              type="number"
+              placeholder="Anzahl Shortlegs"
+              value={stats.shortlegs}
+              onChange={(e) => setStats({ ...stats, shortlegs: parseInt(e.target.value) || 0 })}
+              min="0"
+            />
+            
+            <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>180er</label>
+            <input
+              type="number"
+              placeholder="Anzahl 180er"
+              value={stats.oneEighties}
+              onChange={(e) => setStats({ ...stats, oneEighties: parseInt(e.target.value) || 0 })}
+              min="0"
+            />
+            
+            <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>High Finish</label>
+            <input
+              type="number"
+              placeholder="Höchster Finish"
+              value={stats.highFinish}
+              onChange={(e) => setStats({ ...stats, highFinish: parseInt(e.target.value) || 0 })}
+              min="0"
+            />
+            
+            <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Best of 10 Average</label>
+            <input
+              type="number"
+              placeholder="Durchschnitt über 10 Legs"
+              value={stats.bestOfTen}
+              onChange={(e) => setStats({ ...stats, bestOfTen: parseInt(e.target.value) || 0 })}
+              min="0"
             />
             <div style={{ display: 'flex', gap: '10px' }}>
               <button className="btn btn-primary" onClick={handleSubmitResult}>
