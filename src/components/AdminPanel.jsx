@@ -129,9 +129,11 @@ function AdminPanel({ user }) {
       <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>⚙️ Admin-Panel</h2>
       
       <div className="card">
-        <h3>Spieltag erstellen</h3>
+        <h3>{editingMatchday ? 'Spieltag bearbeiten' : 'Spieltag erstellen'}</h3>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
-          Wähle den Montag als Startdatum. Der Spieltag läuft automatisch bis Sonntag.
+          {editingMatchday 
+            ? 'Bearbeite den Spieltag. Änderungen werden sofort gespeichert.' 
+            : 'Wähle den Montag als Startdatum. Der Spieltag läuft automatisch bis Sonntag.'}
         </p>
         <input
           type="number"
@@ -290,18 +292,26 @@ export default AdminPanel
   }
 
   const handleEditMatchday = (matchday) => {
+    console.log('Editing matchday:', matchday)
     setEditingMatchday(matchday)
     setWeek(matchday.week.toString())
-    setDate(new Date(matchday.startDate.seconds * 1000).toISOString().split('T')[0])
+    const startDate = matchday.startDate?.seconds 
+      ? new Date(matchday.startDate.seconds * 1000) 
+      : new Date(matchday.startDate)
+    setDate(startDate.toISOString().split('T')[0])
   }
 
   const handleUpdateMatchday = async () => {
-    if (!editingMatchday || !week || !date) return
+    if (!editingMatchday || !week || !date) {
+      alert('Bitte alle Felder ausfüllen!')
+      return
+    }
     try {
       const startDate = new Date(date)
       const endDate = new Date(startDate)
       endDate.setDate(endDate.getDate() + 6)
       
+      console.log('Updating matchday:', editingMatchday.id)
       await updateDoc(doc(db, 'matchdays', editingMatchday.id), {
         week: parseInt(week),
         startDate: startDate,
@@ -313,8 +323,8 @@ export default AdminPanel
       setDate('')
       loadData()
     } catch (err) {
-      console.error('Fehler:', err)
-      alert('Fehler beim Aktualisieren!')
+      console.error('Fehler beim Aktualisieren:', err)
+      alert('Fehler beim Aktualisieren: ' + err.message)
     }
   }
 
