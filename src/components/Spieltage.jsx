@@ -130,21 +130,23 @@ function Spieltage({ user }) {
 
   return (
     <div>
-      <h2 style={{ color: 'white', marginBottom: '20px' }}>Spieltage</h2>
+      <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>🎯 Spieltage</h2>
       
       {matchdays.map(md => (
         <div key={md.id} className="card" style={{ marginBottom: '20px' }}>
           <h3>Woche {md.week}</h3>
-          <p style={{ color: '#666', marginBottom: '15px' }}>
-            {new Date(md.date?.seconds * 1000).toLocaleDateString('de-DE')}
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
+            📅 {new Date(md.date?.seconds * 1000).toLocaleDateString('de-DE')}
           </p>
           
           {md.matches.map(match => (
             <div key={match.id} style={{ 
-              padding: '15px', 
-              background: '#f7fafc', 
-              borderRadius: '8px', 
-              marginBottom: '10px' 
+              padding: '18px', 
+              background: 'var(--bg-secondary)', 
+              borderRadius: '12px', 
+              marginBottom: '12px',
+              border: '1px solid var(--border-color)',
+              transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>

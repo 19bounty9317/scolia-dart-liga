@@ -104,7 +104,7 @@ function AdminPanel({ user }) {
 
   return (
     <div>
-      <h2 style={{ color: 'white', marginBottom: '20px' }}>Admin-Panel</h2>
+      <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>⚙️ Admin-Panel</h2>
       
       <div className="card">
         <h3>Spieltag erstellen</h3>

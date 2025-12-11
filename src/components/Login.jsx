@@ -21,12 +21,14 @@ function Login() {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '400px', marginTop: '100px' }}>
-      <div className="card">
-        <h2 style={{ marginBottom: '20px', textAlign: 'center', color: '#667eea' }}>
-          🎯 Scolia Dart Liga
+    <div className="container" style={{ maxWidth: '420px', marginTop: '80px' }}>
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎯</div>
+        <h2 style={{ marginBottom: '8px', fontSize: '32px' }}>
+          Scolia Dart Liga
         </h2>
-        <h3 style={{ marginBottom: '20px' }}>Login</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Willkommen zurück!</p>
+        <h3 style={{ marginBottom: '24px', textAlign: 'left' }}>Login</h3>
         {error && <p style={{ color: '#f56565', marginBottom: '10px' }}>{error}</p>}
         <form onSubmit={handleSubmit}>
           <input
@@ -47,8 +49,8 @@ function Login() {
             Einloggen
           </button>
         </form>
-        <p style={{ marginTop: '20px', textAlign: 'center' }}>
-          Noch kein Account? <Link to="/register" style={{ color: '#667eea' }}>Registrieren</Link>
+        <p style={{ marginTop: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          Noch kein Account? <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: '600' }}>Registrieren</Link>
         </p>
       </div>
     </div>

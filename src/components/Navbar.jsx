@@ -27,31 +27,44 @@ function Navbar({ user }) {
 
 const styles = {
   nav: {
-    background: 'white',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    marginBottom: '20px'
+    background: 'linear-gradient(135deg, #1a2142 0%, #0a0e27 100%)',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+    marginBottom: '20px',
+    borderBottom: '1px solid rgba(0, 255, 136, 0.2)'
   },
   navContent: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '15px 20px'
+    padding: '20px'
   },
   logo: {
-    fontSize: '24px',
+    fontSize: '28px',
     fontWeight: 'bold',
-    color: '#667eea'
+    background: 'linear-gradient(135deg, #00ff88, #00d4ff)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
   },
   navLinks: {
     display: 'flex',
-    gap: '20px',
-    alignItems: 'center'
+    gap: '24px',
+    alignItems: 'center',
+    flexWrap: 'wrap'
   },
   link: {
     textDecoration: 'none',
-    color: '#333',
-    fontWeight: '500',
-    transition: 'color 0.3s'
+    color: '#a0aec0',
+    fontWeight: '600',
+    transition: 'all 0.3s',
+    padding: '8px 16px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
   }
 }
 
