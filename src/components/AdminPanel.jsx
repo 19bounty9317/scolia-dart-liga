@@ -49,16 +49,21 @@ function AdminPanel({ user }) {
 
   const handleCreateMatchday = async () => {
     if (!week || !date) {
-      alert('Bitte Woche und Datum eingeben!')
+      alert('Bitte Woche und Startdatum eingeben!')
       return
     }
     try {
+      const startDate = new Date(date)
+      const endDate = new Date(startDate)
+      endDate.setDate(endDate.getDate() + 6) // +6 Tage = Sonntag
+      
       await addDoc(collection(db, 'matchdays'), {
         week: parseInt(week),
-        date: new Date(date),
+        startDate: startDate,
+        endDate: endDate,
         createdAt: new Date()
       })
-      alert('Spieltag erstellt!')
+      alert('Spieltag erstellt! Zeitraum: Mo-So')
       setWeek('')
       setDate('')
       loadData()
@@ -108,6 +113,9 @@ function AdminPanel({ user }) {
       
       <div className="card">
         <h3>Spieltag erstellen</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
+          Wähle den Montag als Startdatum. Der Spieltag läuft automatisch bis Sonntag.
+        </p>
         <input
           type="number"
           placeholder="Woche (z.B. 1)"
@@ -120,7 +128,7 @@ function AdminPanel({ user }) {
           onChange={(e) => setDate(e.target.value)}
         />
         <button className="btn btn-primary" onClick={handleCreateMatchday}>
-          Spieltag erstellen
+          Spieltag erstellen (Mo-So)
         </button>
       </div>
 

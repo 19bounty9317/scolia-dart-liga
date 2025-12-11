@@ -46,11 +46,11 @@ function Tabelle() {
             playerStats[p2].legsLost += legs1
             
             if (legs1 > legs2) {
-              playerStats[p1].points += 2
+              playerStats[p1].points += 3
               playerStats[p1].wins += 1
               playerStats[p2].losses += 1
             } else if (legs2 > legs1) {
-              playerStats[p2].points += 2
+              playerStats[p2].points += 3
               playerStats[p2].wins += 1
               playerStats[p1].losses += 1
             } else {

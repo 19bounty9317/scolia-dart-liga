@@ -136,7 +136,7 @@ function Spieltage({ user }) {
         <div key={md.id} className="card" style={{ marginBottom: '20px' }}>
           <h3>Woche {md.week}</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
-            📅 {new Date(md.date?.seconds * 1000).toLocaleDateString('de-DE')}
+            📅 {new Date(md.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(md.endDate?.seconds * 1000).toLocaleDateString('de-DE')}
           </p>
           
           {md.matches.map(match => (
@@ -152,15 +152,24 @@ function Spieltage({ user }) {
                 <div>
                   <strong>{match.player1Name}</strong> vs <strong>{match.player2Name}</strong>
                   {match.confirmed && (
-                    <span style={{ marginLeft: '10px', color: '#48bb78' }}>
+                    <span style={{ marginLeft: '10px', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
                       ✓ {match.player1Legs}:{match.player2Legs}
                     </span>
                   )}
-                  {!match.confirmed && match.player1Submitted && (
-                    <span style={{ marginLeft: '10px', color: '#ed8936' }}>⏳ Warte auf Bestätigung</span>
+                  {!match.confirmed && match.player1Submitted && !match.player2Submitted && (
+                    <span style={{ marginLeft: '10px', color: '#ed8936' }}>
+                      ⏳ {match.player1Name} hat eingetragen - warte auf {match.player2Name}
+                    </span>
                   )}
-                  {!match.confirmed && match.player2Submitted && (
-                    <span style={{ marginLeft: '10px', color: '#ed8936' }}>⏳ Warte auf Bestätigung</span>
+                  {!match.confirmed && match.player2Submitted && !match.player1Submitted && (
+                    <span style={{ marginLeft: '10px', color: '#ed8936' }}>
+                      ⏳ {match.player2Name} hat eingetragen - warte auf {match.player1Name}
+                    </span>
+                  )}
+                  {!match.confirmed && match.player1Submitted && match.player2Submitted && (
+                    <span style={{ marginLeft: '10px', color: 'var(--accent-dart)' }}>
+                      ⚠️ Ergebnisse stimmen nicht überein! Admin kontaktieren.
+                    </span>
                   )}
                 </div>
                 {!match.confirmed && (user.uid === match.player1Id || user.uid === match.player2Id) && (
@@ -193,8 +202,9 @@ function Spieltage({ user }) {
           <div className="card" style={{ maxWidth: '400px', width: '90%' }}>
             <h3>Ergebnis eintragen</h3>
             <p>{selectedMatch.player1Name} vs {selectedMatch.player2Name}</p>
-            <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
-              Best of 10 Legs (Summe muss 10 ergeben)
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+              Best of 10 Legs (Summe muss 10 ergeben)<br/>
+              <strong style={{ color: 'var(--accent-primary)' }}>Sieg = 3 Punkte</strong> | Unentschieden = 1 Punkt
             </p>
             <input
               type="number"
