@@ -121,6 +121,93 @@ function AdminPanel({ user }) {
     }
   }
 
+  const handleDeleteMatch = async (matchId) => {
+    if (!confirm('Spiel wirklich löschen?')) return
+    try {
+      await deleteDoc(doc(db, 'matches', matchId))
+      alert('Spiel gelöscht!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Löschen!')
+    }
+  }
+
+  const handleDeleteMatchday = async (matchdayId) => {
+    if (!confirm('Spieltag wirklich löschen? Alle Spiele werden ebenfalls gelöscht!')) return
+    try {
+      const matchesToDelete = matches.filter(m => m.matchdayId === matchdayId)
+      for (const match of matchesToDelete) {
+        await deleteDoc(doc(db, 'matches', match.id))
+      }
+      await deleteDoc(doc(db, 'matchdays', matchdayId))
+      alert('Spieltag und alle Spiele gelöscht!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Löschen!')
+    }
+  }
+
+  const handleEditMatchday = (matchday) => {
+    console.log('Editing matchday:', matchday)
+    setEditingMatchday(matchday)
+    setWeek(matchday.week.toString())
+    const startDate = matchday.startDate?.seconds 
+      ? new Date(matchday.startDate.seconds * 1000) 
+      : new Date(matchday.startDate)
+    setDate(startDate.toISOString().split('T')[0])
+  }
+
+  const handleUpdateMatchday = async () => {
+    if (!editingMatchday || !week || !date) {
+      alert('Bitte alle Felder ausfüllen!')
+      return
+    }
+    try {
+      const startDate = new Date(date)
+      const endDate = new Date(startDate)
+      endDate.setDate(endDate.getDate() + 6)
+      
+      console.log('Updating matchday:', editingMatchday.id)
+      await updateDoc(doc(db, 'matchdays', editingMatchday.id), {
+        week: parseInt(week),
+        startDate: startDate,
+        endDate: endDate
+      })
+      alert('Spieltag aktualisiert!')
+      setEditingMatchday(null)
+      setWeek('')
+      setDate('')
+      loadData()
+    } catch (err) {
+      console.error('Fehler beim Aktualisieren:', err)
+      alert('Fehler beim Aktualisieren: ' + err.message)
+    }
+  }
+
+  const handleResetMatch = async (matchId) => {
+    if (!confirm('Spiel zurücksetzen? Alle Eingaben werden gelöscht!')) return
+    try {
+      await updateDoc(doc(db, 'matches', matchId), {
+        player1Legs: 0,
+        player2Legs: 0,
+        player1Submitted: false,
+        player2Submitted: false,
+        confirmed: false,
+        player1Stats: null,
+        player2Stats: null,
+        player1LegsSubmitted: 0,
+        player2LegsSubmitted: 0
+      })
+      alert('Spiel zurückgesetzt!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Zurücksetzen!')
+    }
+  }
+
   if (loading) return <div className="card"><p>Laden...</p></div>
   if (!isAdmin) return <div className="card"><p>Kein Zugriff. Nur für Admins.</p></div>
 
@@ -260,92 +347,3 @@ function AdminPanel({ user }) {
 }
 
 export default AdminPanel
-
-  const handleDeleteMatch = async (matchId) => {
-    if (!confirm('Spiel wirklich löschen?')) return
-    try {
-      await deleteDoc(doc(db, 'matches', matchId))
-      alert('Spiel gelöscht!')
-      loadData()
-    } catch (err) {
-      console.error('Fehler:', err)
-      alert('Fehler beim Löschen!')
-    }
-  }
-
-  const handleDeleteMatchday = async (matchdayId) => {
-    if (!confirm('Spieltag wirklich löschen? Alle Spiele werden ebenfalls gelöscht!')) return
-    try {
-      // Delete all matches of this matchday
-      const matchesToDelete = matches.filter(m => m.matchdayId === matchdayId)
-      for (const match of matchesToDelete) {
-        await deleteDoc(doc(db, 'matches', match.id))
-      }
-      // Delete matchday
-      await deleteDoc(doc(db, 'matchdays', matchdayId))
-      alert('Spieltag und alle Spiele gelöscht!')
-      loadData()
-    } catch (err) {
-      console.error('Fehler:', err)
-      alert('Fehler beim Löschen!')
-    }
-  }
-
-  const handleEditMatchday = (matchday) => {
-    console.log('Editing matchday:', matchday)
-    setEditingMatchday(matchday)
-    setWeek(matchday.week.toString())
-    const startDate = matchday.startDate?.seconds 
-      ? new Date(matchday.startDate.seconds * 1000) 
-      : new Date(matchday.startDate)
-    setDate(startDate.toISOString().split('T')[0])
-  }
-
-  const handleUpdateMatchday = async () => {
-    if (!editingMatchday || !week || !date) {
-      alert('Bitte alle Felder ausfüllen!')
-      return
-    }
-    try {
-      const startDate = new Date(date)
-      const endDate = new Date(startDate)
-      endDate.setDate(endDate.getDate() + 6)
-      
-      console.log('Updating matchday:', editingMatchday.id)
-      await updateDoc(doc(db, 'matchdays', editingMatchday.id), {
-        week: parseInt(week),
-        startDate: startDate,
-        endDate: endDate
-      })
-      alert('Spieltag aktualisiert!')
-      setEditingMatchday(null)
-      setWeek('')
-      setDate('')
-      loadData()
-    } catch (err) {
-      console.error('Fehler beim Aktualisieren:', err)
-      alert('Fehler beim Aktualisieren: ' + err.message)
-    }
-  }
-
-  const handleResetMatch = async (matchId) => {
-    if (!confirm('Spiel zurücksetzen? Alle Eingaben werden gelöscht!')) return
-    try {
-      await updateDoc(doc(db, 'matches', matchId), {
-        player1Legs: 0,
-        player2Legs: 0,
-        player1Submitted: false,
-        player2Submitted: false,
-        confirmed: false,
-        player1Stats: null,
-        player2Stats: null,
-        player1LegsSubmitted: 0,
-        player2LegsSubmitted: 0
-      })
-      alert('Spiel zurückgesetzt!')
-      loadData()
-    } catch (err) {
-      console.error('Fehler:', err)
-      alert('Fehler beim Zurücksetzen!')
-    }
-  }
