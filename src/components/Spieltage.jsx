@@ -165,7 +165,10 @@ function Spieltage({ user }) {
 
   return (
     <div>
-      <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>🎯 Spieltage</h2>
+      <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>
+        <span style={{ filter: 'none', background: 'none', WebkitTextFillColor: 'initial' }}>🎯</span>
+        {' '}Spieltage
+      </h2>
       
       {matchdays.map(md => (
         <div key={md.id} className="card" style={{ marginBottom: '20px' }}>
