@@ -17,6 +17,9 @@ function Statistiken() {
       
       playersSnap.forEach(doc => {
         const data = doc.data()
+        // Skip test accounts
+        if (data.isTestAccount) return
+        
         statsData.push({
           name: data.name,
           shortlegs: data.stats?.shortlegs || 0,

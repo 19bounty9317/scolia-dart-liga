@@ -22,6 +22,7 @@ function Register() {
         name,
         email,
         isAdmin: false,
+        isTestAccount: false,
         stats: {
           shortlegs: 0,
           oneEighties: 0,

@@ -50,6 +50,20 @@ function Profil({ user }) {
     }
   }
 
+  const handleToggleTestMode = async () => {
+    try {
+      const newTestMode = !playerData.isTestAccount
+      await updateDoc(doc(db, 'players', user.uid), { 
+        isTestAccount: newTestMode 
+      })
+      alert(newTestMode ? 'Test-Modus aktiviert! Du wirst nicht in der Tabelle angezeigt.' : 'Test-Modus deaktiviert! Du erscheinst wieder in der Tabelle.')
+      loadProfile()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Umschalten!')
+    }
+  }
+
   if (loading) return <div className="card"><p>Laden...</p></div>
 
   return (
@@ -58,11 +72,27 @@ function Profil({ user }) {
         <h2 style={{ marginBottom: '20px' }}>Mein Profil</h2>
         <p><strong>Name:</strong> {playerData?.name}</p>
         <p><strong>E-Mail:</strong> {playerData?.email}</p>
+        
         {playerData?.isAdmin && (
           <div style={{ marginTop: '20px' }}>
             <Link to="/admin">
               <button className="btn btn-primary">Admin-Panel</button>
             </Link>
+            
+            <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <h4 style={{ marginBottom: '12px', color: 'var(--accent-primary)' }}>🧪 Test-Modus</h4>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                {playerData?.isTestAccount 
+                  ? '✅ Aktiviert - Du wirst nicht in der Tabelle angezeigt' 
+                  : '❌ Deaktiviert - Du erscheinst normal in der Tabelle'}
+              </p>
+              <button 
+                className={playerData?.isTestAccount ? "btn btn-danger" : "btn btn-primary"}
+                onClick={handleToggleTestMode}
+              >
+                {playerData?.isTestAccount ? 'Test-Modus deaktivieren' : 'Test-Modus aktivieren'}
+              </button>
+            </div>
           </div>
         )}
       </div>

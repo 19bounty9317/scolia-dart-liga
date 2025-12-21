@@ -20,6 +20,9 @@ function Tabelle() {
       
       playersSnap.forEach(doc => {
         const data = doc.data()
+        // Skip test accounts
+        if (data.isTestAccount) return
+        
         playerStats[doc.id] = {
           id: doc.id,
           name: data.name,
