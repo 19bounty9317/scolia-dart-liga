@@ -151,12 +151,32 @@ function AdminPanel({ user }) {
 
   const handleEditMatchday = (matchday) => {
     console.log('Editing matchday:', matchday)
-    setEditingMatchday(matchday)
-    setWeek(matchday.week.toString())
-    const startDate = matchday.startDate?.seconds 
-      ? new Date(matchday.startDate.seconds * 1000) 
-      : new Date(matchday.startDate)
-    setDate(startDate.toISOString().split('T')[0])
+    try {
+      setEditingMatchday(matchday)
+      setWeek(matchday.week.toString())
+      
+      // Handle different date formats
+      let startDate
+      if (matchday.startDate?.seconds) {
+        // Firestore Timestamp
+        startDate = new Date(matchday.startDate.seconds * 1000)
+      } else if (matchday.startDate?.toDate) {
+        // Firestore Timestamp object
+        startDate = matchday.startDate.toDate()
+      } else if (matchday.startDate) {
+        // Regular Date or string
+        startDate = new Date(matchday.startDate)
+      } else {
+        startDate = new Date()
+      }
+      
+      const dateString = startDate.toISOString().split('T')[0]
+      console.log('Setting date to:', dateString)
+      setDate(dateString)
+    } catch (err) {
+      console.error('Fehler beim Bearbeiten:', err)
+      alert('Fehler beim Laden der Daten: ' + err.message)
+    }
   }
 
   const handleUpdateMatchday = async () => {
@@ -164,22 +184,40 @@ function AdminPanel({ user }) {
       alert('Bitte alle Felder ausfüllen!')
       return
     }
+    
+    console.log('Updating matchday:', {
+      id: editingMatchday.id,
+      week: week,
+      date: date
+    })
+    
     try {
       const startDate = new Date(date)
+      if (isNaN(startDate.getTime())) {
+        alert('Ungültiges Datum!')
+        return
+      }
+      
       const endDate = new Date(startDate)
       endDate.setDate(endDate.getDate() + 6)
       
-      console.log('Updating matchday:', editingMatchday.id)
+      console.log('Updating with:', {
+        week: parseInt(week),
+        startDate: startDate,
+        endDate: endDate
+      })
+      
       await updateDoc(doc(db, 'matchdays', editingMatchday.id), {
         week: parseInt(week),
         startDate: startDate,
         endDate: endDate
       })
-      alert('Spieltag aktualisiert!')
+      
+      alert('Spieltag erfolgreich aktualisiert!')
       setEditingMatchday(null)
       setWeek('')
       setDate('')
-      loadData()
+      await loadData()
     } catch (err) {
       console.error('Fehler beim Aktualisieren:', err)
       alert('Fehler beim Aktualisieren: ' + err.message)
