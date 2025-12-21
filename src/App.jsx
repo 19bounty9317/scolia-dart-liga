@@ -17,23 +17,27 @@ function App() {
       setUser(currentUser)
       setLoading(false)
       
-      if (currentUser) {
-        // Set user online status
-        const userStatusRef = ref(rtdb, `status/${currentUser.uid}`)
-        const isOnlineData = {
-          online: true,
-          lastSeen: serverTimestamp()
+      if (currentUser && rtdb) {
+        try {
+          // Set user online status
+          const userStatusRef = ref(rtdb, `status/${currentUser.uid}`)
+          const isOnlineData = {
+            online: true,
+            lastSeen: serverTimestamp()
+          }
+          const isOfflineData = {
+            online: false,
+            lastSeen: serverTimestamp()
+          }
+          
+          // Set online
+          set(userStatusRef, isOnlineData)
+          
+          // Set offline on disconnect
+          onDisconnect(userStatusRef).set(isOfflineData)
+        } catch (err) {
+          console.warn('Online-Status konnte nicht gesetzt werden:', err.message)
         }
-        const isOfflineData = {
-          online: false,
-          lastSeen: serverTimestamp()
-        }
-        
-        // Set online
-        set(userStatusRef, isOnlineData)
-        
-        // Set offline on disconnect
-        onDisconnect(userStatusRef).set(isOfflineData)
       }
     })
     return unsubscribe

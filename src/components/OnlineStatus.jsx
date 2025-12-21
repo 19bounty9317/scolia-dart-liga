@@ -6,15 +6,19 @@ function OnlineStatus({ userId, showText = false }) {
   const [isOnline, setIsOnline] = useState(false)
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId || !rtdb) return
 
-    const statusRef = ref(rtdb, `status/${userId}`)
-    const unsubscribe = onValue(statusRef, (snapshot) => {
-      const data = snapshot.val()
-      setIsOnline(data?.online || false)
-    })
+    try {
+      const statusRef = ref(rtdb, `status/${userId}`)
+      const unsubscribe = onValue(statusRef, (snapshot) => {
+        const data = snapshot.val()
+        setIsOnline(data?.online || false)
+      })
 
-    return () => unsubscribe()
+      return () => unsubscribe()
+    } catch (err) {
+      console.warn('Online-Status konnte nicht geladen werden:', err.message)
+    }
   }, [userId])
 
   return (
