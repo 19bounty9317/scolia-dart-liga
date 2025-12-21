@@ -50,13 +50,13 @@ function Profil({ user }) {
     }
   }
 
-  const handleToggleTestMode = async () => {
+  const handleToggleVisibility = async () => {
     try {
-      const newTestMode = !playerData.isTestAccount
+      const newVisibility = !playerData.isTestAccount
       await updateDoc(doc(db, 'players', user.uid), { 
-        isTestAccount: newTestMode 
+        isTestAccount: newVisibility 
       })
-      alert(newTestMode ? 'Test-Modus aktiviert! Du wirst nicht in der Tabelle angezeigt.' : 'Test-Modus deaktiviert! Du erscheinst wieder in der Tabelle.')
+      alert(newVisibility ? 'Du bist jetzt ausgeblendet und erscheinst nicht in der Tabelle.' : 'Du bist jetzt sichtbar und erscheinst in der Tabelle.')
       loadProfile()
     } catch (err) {
       console.error('Fehler:', err)
@@ -80,17 +80,17 @@ function Profil({ user }) {
             </Link>
             
             <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <h4 style={{ marginBottom: '12px', color: 'var(--accent-primary)' }}>🧪 Test-Modus</h4>
+              <h4 style={{ marginBottom: '12px', color: 'var(--accent-primary)' }}>👁️ Sichtbarkeit</h4>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
                 {playerData?.isTestAccount 
-                  ? '✅ Aktiviert - Du wirst nicht in der Tabelle angezeigt' 
-                  : '❌ Deaktiviert - Du erscheinst normal in der Tabelle'}
+                  ? '🔒 Ausgeblendet - Du erscheinst nicht in der Tabelle' 
+                  : '👁️ Sichtbar - Du erscheinst in der Tabelle'}
               </p>
               <button 
-                className={playerData?.isTestAccount ? "btn btn-danger" : "btn btn-primary"}
-                onClick={handleToggleTestMode}
+                className={playerData?.isTestAccount ? "btn btn-primary" : "btn btn-secondary"}
+                onClick={handleToggleVisibility}
               >
-                {playerData?.isTestAccount ? 'Test-Modus deaktivieren' : 'Test-Modus aktivieren'}
+                {playerData?.isTestAccount ? 'Einblenden' : 'Ausblenden'}
               </button>
             </div>
           </div>
