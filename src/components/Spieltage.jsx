@@ -97,16 +97,36 @@ function Spieltage({ user }) {
           player1Stats: stats
         })
         
-        // Update player stats
+        // Update player stats and top values
         const playerRef = doc(db, 'players', user.uid)
         const playerDoc = await getDoc(playerRef)
         const currentStats = playerDoc.data().stats || {}
+        const currentTopStats = playerDoc.data().topStats || { topShortlegs: [0, 0, 0], topHighFinishes: [0, 0, 0] }
+        
+        // Update top shortlegs if new value is better
+        const newTopShortlegs = [...currentTopStats.topShortlegs, stats.shortlegs]
+          .filter(v => v > 0)
+          .sort((a, b) => a - b) // Sort ascending (lower is better for shortlegs)
+          .slice(0, 3)
+        while (newTopShortlegs.length < 3) newTopShortlegs.push(0)
+        
+        // Update top high finishes if new value is better
+        const newTopHighFinishes = [...currentTopStats.topHighFinishes, stats.highFinish]
+          .filter(v => v > 0)
+          .sort((a, b) => b - a) // Sort descending (higher is better)
+          .slice(0, 3)
+        while (newTopHighFinishes.length < 3) newTopHighFinishes.push(0)
+        
         await updateDoc(playerRef, {
           stats: {
             shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
             oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
             highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
             bestOfTen: Math.max(currentStats.bestOfTen || 0, stats.bestOfTen)
+          },
+          topStats: {
+            topShortlegs: newTopShortlegs,
+            topHighFinishes: newTopHighFinishes
           }
         })
       } else {
@@ -121,16 +141,36 @@ function Spieltage({ user }) {
           player2Stats: stats
         })
         
-        // Update player stats
+        // Update player stats and top values
         const playerRef = doc(db, 'players', user.uid)
         const playerDoc = await getDoc(playerRef)
         const currentStats = playerDoc.data().stats || {}
+        const currentTopStats = playerDoc.data().topStats || { topShortlegs: [0, 0, 0], topHighFinishes: [0, 0, 0] }
+        
+        // Update top shortlegs if new value is better
+        const newTopShortlegs = [...currentTopStats.topShortlegs, stats.shortlegs]
+          .filter(v => v > 0)
+          .sort((a, b) => a - b) // Sort ascending (lower is better for shortlegs)
+          .slice(0, 3)
+        while (newTopShortlegs.length < 3) newTopShortlegs.push(0)
+        
+        // Update top high finishes if new value is better
+        const newTopHighFinishes = [...currentTopStats.topHighFinishes, stats.highFinish]
+          .filter(v => v > 0)
+          .sort((a, b) => b - a) // Sort descending (higher is better)
+          .slice(0, 3)
+        while (newTopHighFinishes.length < 3) newTopHighFinishes.push(0)
+        
         await updateDoc(playerRef, {
           stats: {
             shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
             oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
             highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
             bestOfTen: Math.max(currentStats.bestOfTen || 0, stats.bestOfTen)
+          },
+          topStats: {
+            topShortlegs: newTopShortlegs,
+            topHighFinishes: newTopHighFinishes
           }
         })
       }
@@ -265,14 +305,17 @@ function Spieltage({ user }) {
               Deine Statistiken in diesem Spiel
             </h4>
             
-            <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Shortlegs</label>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Shortlegs (Anzahl Darts für ein Leg)</label>
             <input
               type="number"
-              placeholder="Anzahl Shortlegs"
+              placeholder="z.B. 15 für 15-Darter"
               value={stats.shortlegs}
               onChange={(e) => setStats({ ...stats, shortlegs: parseInt(e.target.value) || 0 })}
               min="0"
             />
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '-8px', marginBottom: '12px' }}>
+              Dein bester Shortleg in diesem Spiel (wird automatisch in Top 3 gespeichert)
+            </p>
             
             <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>180er</label>
             <input
@@ -286,11 +329,15 @@ function Spieltage({ user }) {
             <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>High Finish</label>
             <input
               type="number"
-              placeholder="Höchster Finish"
+              placeholder="z.B. 120"
               value={stats.highFinish}
               onChange={(e) => setStats({ ...stats, highFinish: parseInt(e.target.value) || 0 })}
               min="0"
+              max="170"
             />
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '-8px', marginBottom: '12px' }}>
+              Dein höchster Finish in diesem Spiel (wird automatisch in Top 3 gespeichert)
+            </p>
             
             <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Best of 10 Average</label>
             <input
