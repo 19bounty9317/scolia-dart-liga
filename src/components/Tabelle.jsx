@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query, orderBy } from 'firebase/firestore'
 import { db } from '../firebase'
+import OnlineStatus from './OnlineStatus'
 
 function Tabelle() {
   const [standings, setStandings] = useState([])
@@ -20,6 +21,7 @@ function Tabelle() {
       playersSnap.forEach(doc => {
         const data = doc.data()
         playerStats[doc.id] = {
+          id: doc.id,
           name: data.name,
           points: 0,
           wins: 0,
@@ -92,6 +94,7 @@ function Tabelle() {
           <thead>
             <tr>
               <th>Platz</th>
+              <th>Status</th>
               <th>Spieler</th>
               <th>Punkte</th>
               <th>S</th>
@@ -105,13 +108,14 @@ function Tabelle() {
             {standings.map((player, index) => (
               <tr key={index}>
                 <td><strong>{index + 1}</strong></td>
+                <td><OnlineStatus userId={player.id} /></td>
                 <td>{player.name}</td>
                 <td><strong>{player.points}</strong></td>
                 <td>{player.wins}</td>
                 <td>{player.draws}</td>
                 <td>{player.losses}</td>
                 <td>{player.legsWon}:{player.legsLost}</td>
-                <td style={{ color: player.legDiff > 0 ? 'green' : player.legDiff < 0 ? 'red' : 'black' }}>
+                <td style={{ color: player.legDiff > 0 ? 'green' : player.legDiff < 0 ? 'red' : 'white' }}>
                   {player.legDiff > 0 ? '+' : ''}{player.legDiff}
                 </td>
               </tr>
