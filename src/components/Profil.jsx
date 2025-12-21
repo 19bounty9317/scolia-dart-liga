@@ -7,11 +7,16 @@ function Profil({ user }) {
   const [playerData, setPlayerData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [editingTopStats, setEditingTopStats] = useState(false)
   const [stats, setStats] = useState({
     shortlegs: 0,
     oneEighties: 0,
     highFinish: 0,
     bestOfTen: 0
+  })
+  const [topStats, setTopStats] = useState({
+    topShortlegs: [0, 0, 0],
+    topHighFinishes: [0, 0, 0]
   })
 
   useEffect(() => {
@@ -25,6 +30,7 @@ function Profil({ user }) {
         const data = playerDoc.data()
         setPlayerData(data)
         setStats(data.stats || stats)
+        setTopStats(data.topStats || topStats)
       }
     } catch (err) {
       console.error('Fehler beim Laden des Profils:', err)
@@ -38,6 +44,18 @@ function Profil({ user }) {
       await updateDoc(doc(db, 'players', user.uid), { stats })
       alert('Statistiken aktualisiert!')
       setEditing(false)
+      loadProfile()
+    } catch (err) {
+      console.error('Fehler beim Speichern:', err)
+      alert('Fehler beim Speichern!')
+    }
+  }
+
+  const handleSaveTopStats = async () => {
+    try {
+      await updateDoc(doc(db, 'players', user.uid), { topStats })
+      alert('Top-Werte aktualisiert!')
+      setEditingTopStats(false)
       loadProfile()
     } catch (err) {
       console.error('Fehler beim Speichern:', err)
@@ -64,7 +82,7 @@ function Profil({ user }) {
 
       <div className="card" style={{ marginTop: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3>Meine Statistiken</h3>
+          <h3>Meine Gesamt-Statistiken</h3>
           {!editing && (
             <button className="btn btn-secondary" onClick={() => setEditing(true)}>
               Bearbeiten
@@ -112,6 +130,144 @@ function Profil({ user }) {
               <button className="btn btn-secondary" onClick={() => {
                 setEditing(false)
                 setStats(playerData.stats || stats)
+              }}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3>Meine Top 3 Werte</h3>
+          {!editingTopStats && (
+            <button className="btn btn-secondary" onClick={() => setEditingTopStats(true)}>
+              Bearbeiten
+            </button>
+          )}
+        </div>
+
+        {!editingTopStats ? (
+          <div>
+            <h4 style={{ color: 'var(--accent-primary)', marginTop: '16px', marginBottom: '12px' }}>🏆 Top 3 Shortlegs</h4>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {topStats.topShortlegs.map((value, index) => (
+                <div key={index} style={{ 
+                  padding: '12px 20px', 
+                  background: 'var(--bg-secondary)', 
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  minWidth: '80px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                  </div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                    {value || '-'}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h4 style={{ color: 'var(--accent-primary)', marginTop: '20px', marginBottom: '12px' }}>🎯 Top 3 High Finishes</h4>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {topStats.topHighFinishes.map((value, index) => (
+                <div key={index} style={{ 
+                  padding: '12px 20px', 
+                  background: 'var(--bg-secondary)', 
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  minWidth: '80px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                  </div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                    {value || '-'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h4 style={{ color: 'var(--accent-primary)', marginBottom: '12px' }}>🏆 Top 3 Shortlegs</h4>
+            <label style={{ fontSize: '14px' }}>1. Bester Shortleg</label>
+            <input
+              type="number"
+              value={topStats.topShortlegs[0]}
+              onChange={(e) => setTopStats({ 
+                ...topStats, 
+                topShortlegs: [parseInt(e.target.value) || 0, topStats.topShortlegs[1], topStats.topShortlegs[2]]
+              })}
+              min="0"
+            />
+            <label style={{ fontSize: '14px' }}>2. Bester Shortleg</label>
+            <input
+              type="number"
+              value={topStats.topShortlegs[1]}
+              onChange={(e) => setTopStats({ 
+                ...topStats, 
+                topShortlegs: [topStats.topShortlegs[0], parseInt(e.target.value) || 0, topStats.topShortlegs[2]]
+              })}
+              min="0"
+            />
+            <label style={{ fontSize: '14px' }}>3. Bester Shortleg</label>
+            <input
+              type="number"
+              value={topStats.topShortlegs[2]}
+              onChange={(e) => setTopStats({ 
+                ...topStats, 
+                topShortlegs: [topStats.topShortlegs[0], topStats.topShortlegs[1], parseInt(e.target.value) || 0]
+              })}
+              min="0"
+            />
+
+            <h4 style={{ color: 'var(--accent-primary)', marginTop: '20px', marginBottom: '12px' }}>🎯 Top 3 High Finishes</h4>
+            <label style={{ fontSize: '14px' }}>1. Höchster Finish</label>
+            <input
+              type="number"
+              value={topStats.topHighFinishes[0]}
+              onChange={(e) => setTopStats({ 
+                ...topStats, 
+                topHighFinishes: [parseInt(e.target.value) || 0, topStats.topHighFinishes[1], topStats.topHighFinishes[2]]
+              })}
+              min="0"
+              max="170"
+            />
+            <label style={{ fontSize: '14px' }}>2. Höchster Finish</label>
+            <input
+              type="number"
+              value={topStats.topHighFinishes[1]}
+              onChange={(e) => setTopStats({ 
+                ...topStats, 
+                topHighFinishes: [topStats.topHighFinishes[0], parseInt(e.target.value) || 0, topStats.topHighFinishes[2]]
+              })}
+              min="0"
+              max="170"
+            />
+            <label style={{ fontSize: '14px' }}>3. Höchster Finish</label>
+            <input
+              type="number"
+              value={topStats.topHighFinishes[2]}
+              onChange={(e) => setTopStats({ 
+                ...topStats, 
+                topHighFinishes: [topStats.topHighFinishes[0], topStats.topHighFinishes[1], parseInt(e.target.value) || 0]
+              })}
+              min="0"
+              max="170"
+            />
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button className="btn btn-primary" onClick={handleSaveTopStats}>
+                Speichern
+              </button>
+              <button className="btn btn-secondary" onClick={() => {
+                setEditingTopStats(false)
+                setTopStats(playerData.topStats || topStats)
               }}>
                 Abbrechen
               </button>
