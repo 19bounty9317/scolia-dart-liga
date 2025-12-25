@@ -112,7 +112,7 @@ function Profil({ user }) {
             <p><strong>Shortlegs:</strong> {stats.shortlegs}</p>
             <p><strong>180er:</strong> {stats.oneEighties}</p>
             <p><strong>High Finish:</strong> {stats.highFinish}</p>
-            <p><strong>Best of 10:</strong> {stats.bestOfTen}</p>
+            <p><strong>Ø Average:</strong> {stats.bestOfTen} {stats.averageData?.count > 0 && `(aus ${stats.averageData.count} Spielen)`}</p>
           </div>
         ) : (
           <div>
@@ -134,7 +134,7 @@ function Profil({ user }) {
               value={stats.highFinish}
               onChange={(e) => setStats({ ...stats, highFinish: parseInt(e.target.value) || 0 })}
             />
-            <label>Best of 10</label>
+            <label>Ø Average</label>
             <input
               type="number"
               value={stats.bestOfTen}

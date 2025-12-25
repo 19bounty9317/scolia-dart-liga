@@ -342,11 +342,14 @@ function Spieltage({ user }) {
             <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Best of 10 Average</label>
             <input
               type="number"
-              placeholder="Durchschnitt über 10 Legs"
+              placeholder="z.B. 75"
               value={stats.bestOfTen}
               onChange={(e) => setStats({ ...stats, bestOfTen: parseInt(e.target.value) || 0 })}
               min="0"
             />
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '-8px', marginBottom: '12px' }}>
+              Dein Durchschnitt in diesem Spiel (wird in Gesamt-Durchschnitt eingerechnet)
+            </p>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button className="btn btn-primary" onClick={handleSubmitResult}>
                 Bestätigen

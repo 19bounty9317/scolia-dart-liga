@@ -194,6 +194,9 @@ function Statistiken() {
 
         <div className="card">
           <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>📈 Top 3 Average</h3>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+            Durchschnitt über alle Spiele
+          </p>
           {topAverage.length > 0 ? (
             topAverage.map((player, index) => (
               <div key={index} style={{ 
@@ -241,7 +244,7 @@ function Statistiken() {
                 <th>Shortlegs</th>
                 <th>180er</th>
                 <th>High Finish</th>
-                <th>Best of 10</th>
+                <th>Ø Average</th>
               </tr>
             </thead>
             <tbody>
