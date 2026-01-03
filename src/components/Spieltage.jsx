@@ -4,7 +4,10 @@ import { db } from '../firebase'
 
 function Spieltage({ user }) {
   const [matchdays, setMatchdays] = useState([])
+  const [selectedMatchdayId, setSelectedMatchdayId] = useState('')
+  const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMatches, setLoadingMatches] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [player1Legs, setPlayer1Legs] = useState('')
   const [player2Legs, setPlayer2Legs] = useState('')
@@ -19,45 +22,64 @@ function Spieltage({ user }) {
     loadMatchdays()
   }, [])
 
+  useEffect(() => {
+    if (selectedMatchdayId) {
+      loadMatches(selectedMatchdayId)
+    }
+  }, [selectedMatchdayId])
+
   const loadMatchdays = async () => {
     try {
       const matchdaysSnap = await getDocs(collection(db, 'matchdays'))
-      const matchesSnap = await getDocs(collection(db, 'matches'))
-      
       const matchdaysData = []
       
-      for (const mdDoc of matchdaysSnap.docs) {
-        const mdData = mdDoc.data()
-        const matches = []
-        
-        for (const mDoc of matchesSnap.docs) {
-          const match = mDoc.data()
-          if (match.matchdayId === mdDoc.id) {
-            const p1Doc = await getDoc(doc(db, 'players', match.player1Id))
-            const p2Doc = await getDoc(doc(db, 'players', match.player2Id))
-            
-            matches.push({
-              id: mDoc.id,
-              ...match,
-              player1Name: p1Doc.data()?.name || 'Unbekannt',
-              player2Name: p2Doc.data()?.name || 'Unbekannt'
-            })
-          }
-        }
-        
+      matchdaysSnap.forEach(doc => {
         matchdaysData.push({
-          id: mdDoc.id,
-          ...mdData,
-          matches
+          id: doc.id,
+          ...doc.data()
         })
-      }
+      })
       
       matchdaysData.sort((a, b) => b.week - a.week)
       setMatchdays(matchdaysData)
+      
+      // Auto-select first matchday
+      if (matchdaysData.length > 0) {
+        setSelectedMatchdayId(matchdaysData[0].id)
+      }
     } catch (err) {
       console.error('Fehler beim Laden der Spieltage:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMatches = async (matchdayId) => {
+    setLoadingMatches(true)
+    try {
+      const matchesSnap = await getDocs(collection(db, 'matches'))
+      const matchesData = []
+      
+      for (const mDoc of matchesSnap.docs) {
+        const match = mDoc.data()
+        if (match.matchdayId === matchdayId) {
+          const p1Doc = await getDoc(doc(db, 'players', match.player1Id))
+          const p2Doc = await getDoc(doc(db, 'players', match.player2Id))
+          
+          matchesData.push({
+            id: mDoc.id,
+            ...match,
+            player1Name: p1Doc.data()?.name || 'Unbekannt',
+            player2Name: p2Doc.data()?.name || 'Unbekannt'
+          })
+        }
+      }
+      
+      setMatches(matchesData)
+    } catch (err) {
+      console.error('Fehler beim Laden der Spiele:', err)
+    } finally {
+      setLoadingMatches(false)
     }
   }
 
@@ -103,6 +125,12 @@ function Spieltage({ user }) {
         const currentStats = playerDoc.data().stats || {}
         const currentTopStats = playerDoc.data().topStats || { topShortlegs: [0, 0, 0], topHighFinishes: [0, 0, 0] }
         
+        // Calculate new average
+        const currentAvgData = currentStats.averageData || { total: 0, count: 0 }
+        const newTotal = currentAvgData.total + stats.bestOfTen
+        const newCount = stats.bestOfTen > 0 ? currentAvgData.count + 1 : currentAvgData.count
+        const newAverage = newCount > 0 ? Math.round((newTotal / newCount) * 10) / 10 : 0
+        
         // Update top shortlegs if new value is better
         const newTopShortlegs = [...currentTopStats.topShortlegs, stats.shortlegs]
           .filter(v => v > 0)
@@ -122,7 +150,8 @@ function Spieltage({ user }) {
             shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
             oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
             highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
-            bestOfTen: Math.max(currentStats.bestOfTen || 0, stats.bestOfTen)
+            bestOfTen: newAverage,
+            averageData: { total: newTotal, count: newCount }
           },
           topStats: {
             topShortlegs: newTopShortlegs,
@@ -147,6 +176,12 @@ function Spieltage({ user }) {
         const currentStats = playerDoc.data().stats || {}
         const currentTopStats = playerDoc.data().topStats || { topShortlegs: [0, 0, 0], topHighFinishes: [0, 0, 0] }
         
+        // Calculate new average
+        const currentAvgData = currentStats.averageData || { total: 0, count: 0 }
+        const newTotal = currentAvgData.total + stats.bestOfTen
+        const newCount = stats.bestOfTen > 0 ? currentAvgData.count + 1 : currentAvgData.count
+        const newAverage = newCount > 0 ? Math.round((newTotal / newCount) * 10) / 10 : 0
+        
         // Update top shortlegs if new value is better
         const newTopShortlegs = [...currentTopStats.topShortlegs, stats.shortlegs]
           .filter(v => v > 0)
@@ -166,7 +201,8 @@ function Spieltage({ user }) {
             shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
             oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
             highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
-            bestOfTen: Math.max(currentStats.bestOfTen || 0, stats.bestOfTen)
+            bestOfTen: newAverage,
+            averageData: { total: newTotal, count: newCount }
           },
           topStats: {
             topShortlegs: newTopShortlegs,
@@ -194,7 +230,9 @@ function Spieltage({ user }) {
       setPlayer1Legs('')
       setPlayer2Legs('')
       setStats({ shortlegs: 0, oneEighties: 0, highFinish: 0, bestOfTen: 0 })
-      loadMatchdays()
+      if (selectedMatchdayId) {
+        loadMatches(selectedMatchdayId)
+      }
     } catch (err) {
       console.error('Fehler beim Eintragen des Ergebnisses:', err)
       alert('Fehler beim Eintragen!')
@@ -203,6 +241,8 @@ function Spieltage({ user }) {
 
   if (loading) return <div className="card"><p>Laden...</p></div>
 
+  const selectedMatchday = matchdays.find(md => md.id === selectedMatchdayId)
+
   return (
     <div>
       <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>
@@ -210,59 +250,82 @@ function Spieltage({ user }) {
         {' '}Spieltage
       </h2>
       
-      {matchdays.map(md => (
-        <div key={md.id} className="card" style={{ marginBottom: '20px' }}>
-          <h3>Woche {md.week}</h3>
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <label style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', display: 'block' }}>
+          Spieltag auswählen
+        </label>
+        <select 
+          value={selectedMatchdayId} 
+          onChange={(e) => setSelectedMatchdayId(e.target.value)}
+          style={{ fontSize: '16px', padding: '12px' }}
+        >
+          {matchdays.map(md => (
+            <option key={md.id} value={md.id}>
+              Woche {md.week} ({new Date(md.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(md.endDate?.seconds * 1000).toLocaleDateString('de-DE')})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {loadingMatches ? (
+        <div className="card"><p>Spiele werden geladen...</p></div>
+      ) : selectedMatchday && (
+        <div className="card">
+          <h3>Woche {selectedMatchday.week}</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
-            📅 {new Date(md.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(md.endDate?.seconds * 1000).toLocaleDateString('de-DE')}
+            📅 {new Date(selectedMatchday.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(selectedMatchday.endDate?.seconds * 1000).toLocaleDateString('de-DE')}
           </p>
           
-          {md.matches.map(match => (
-            <div key={match.id} style={{ 
-              padding: '18px', 
-              background: 'var(--bg-secondary)', 
-              borderRadius: '12px', 
-              marginBottom: '12px',
-              border: '1px solid var(--border-color)',
-              transition: 'all 0.2s'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <strong>{match.player1Name}</strong> vs <strong>{match.player2Name}</strong>
-                  {match.confirmed && (
-                    <span style={{ marginLeft: '10px', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-                      ✓ {match.player1Legs}:{match.player2Legs}
-                    </span>
-                  )}
-                  {!match.confirmed && match.player1Submitted && !match.player2Submitted && (
-                    <span style={{ marginLeft: '10px', color: '#ed8936' }}>
-                      ⏳ {match.player1Name} hat eingetragen - warte auf {match.player2Name}
-                    </span>
-                  )}
-                  {!match.confirmed && match.player2Submitted && !match.player1Submitted && (
-                    <span style={{ marginLeft: '10px', color: '#ed8936' }}>
-                      ⏳ {match.player2Name} hat eingetragen - warte auf {match.player1Name}
-                    </span>
-                  )}
-                  {!match.confirmed && match.player1Submitted && match.player2Submitted && (
-                    <span style={{ marginLeft: '10px', color: 'var(--accent-dart)' }}>
-                      ⚠️ Ergebnisse stimmen nicht überein! Admin kontaktieren.
-                    </span>
+          {matches.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)' }}>Noch keine Spiele für diesen Spieltag</p>
+          ) : (
+            matches.map(match => (
+              <div key={match.id} style={{ 
+                padding: '18px', 
+                background: 'var(--bg-secondary)', 
+                borderRadius: '12px', 
+                marginBottom: '12px',
+                border: '1px solid var(--border-color)',
+                transition: 'all 0.2s'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong>{match.player1Name}</strong> vs <strong>{match.player2Name}</strong>
+                    {match.confirmed && (
+                      <span style={{ marginLeft: '10px', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                        ✓ {match.player1Legs}:{match.player2Legs}
+                      </span>
+                    )}
+                    {!match.confirmed && match.player1Submitted && !match.player2Submitted && (
+                      <span style={{ marginLeft: '10px', color: '#ed8936' }}>
+                        ⏳ {match.player1Name} hat eingetragen - warte auf {match.player2Name}
+                      </span>
+                    )}
+                    {!match.confirmed && match.player2Submitted && !match.player1Submitted && (
+                      <span style={{ marginLeft: '10px', color: '#ed8936' }}>
+                        ⏳ {match.player2Name} hat eingetragen - warte auf {match.player1Name}
+                      </span>
+                    )}
+                    {!match.confirmed && match.player1Submitted && match.player2Submitted && (
+                      <span style={{ marginLeft: '10px', color: 'var(--accent-dart)' }}>
+                        ⚠️ Ergebnisse stimmen nicht überein! Admin kontaktieren.
+                      </span>
+                    )}
+                  </div>
+                  {!match.confirmed && (user.uid === match.player1Id || user.uid === match.player2Id) && (
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => setSelectedMatch(match)}
+                    >
+                      Ergebnis eintragen
+                    </button>
                   )}
                 </div>
-                {!match.confirmed && (user.uid === match.player1Id || user.uid === match.player2Id) && (
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={() => setSelectedMatch(match)}
-                  >
-                    Ergebnis eintragen
-                  </button>
-                )}
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-      ))}
+      )}
       
       {selectedMatch && (
         <div style={{
