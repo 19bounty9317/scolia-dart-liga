@@ -31,12 +31,46 @@ function Spieltage({ user }) {
   const loadMatchdays = async () => {
     try {
       const matchdaysSnap = await getDocs(collection(db, 'matchdays'))
+      const matchesSnap = await getDocs(collection(db, 'matches'))
+      
+      // Create a map of matchday statuses
+      const matchdayStatuses = {}
+      
+      matchesSnap.forEach(doc => {
+        const match = doc.data()
+        const mdId = match.matchdayId
+        
+        if (!matchdayStatuses[mdId]) {
+          matchdayStatuses[mdId] = { total: 0, confirmed: 0, hasError: false }
+        }
+        
+        matchdayStatuses[mdId].total++
+        
+        if (match.confirmed) {
+          matchdayStatuses[mdId].confirmed++
+        } else if (match.player1Submitted && match.player2Submitted) {
+          // Both submitted but not confirmed = mismatch error
+          matchdayStatuses[mdId].hasError = true
+        }
+      })
+      
       const matchdaysData = []
       
       matchdaysSnap.forEach(doc => {
+        const mdId = doc.id
+        const status = matchdayStatuses[mdId] || { total: 0, confirmed: 0, hasError: false }
+        
+        let statusIndicator = '🔴' // Red = open matches
+        if (status.hasError) {
+          statusIndicator = '⚠️' // Warning = error/mismatch
+        } else if (status.total > 0 && status.confirmed === status.total) {
+          statusIndicator = '🟢' // Green = all confirmed
+        }
+        
         matchdaysData.push({
-          id: doc.id,
-          ...doc.data()
+          id: mdId,
+          ...doc.data(),
+          statusIndicator
         })
       })
       
@@ -268,7 +302,7 @@ function Spieltage({ user }) {
         >
           {matchdays.map(md => (
             <option key={md.id} value={md.id}>
-              Woche {md.week} ({new Date(md.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(md.endDate?.seconds * 1000).toLocaleDateString('de-DE')})
+              {md.statusIndicator} Woche {md.week} ({new Date(md.startDate?.seconds * 1000).toLocaleDateString('de-DE')} - {new Date(md.endDate?.seconds * 1000).toLocaleDateString('de-DE')})
             </option>
           ))}
         </select>

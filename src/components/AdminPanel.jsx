@@ -246,12 +246,143 @@ function AdminPanel({ user }) {
     }
   }
 
+  const handleResetTable = async () => {
+    if (!confirm('⚠️ Tabelle zurücksetzen?\n\nDies wird:\n- Alle Punkte, Siege, Niederlagen zurücksetzen\n- Alle bestätigten Spiele zurücksetzen\n\nStatistiken und Spieltage bleiben erhalten!')) return
+    
+    try {
+      // Reset all matches
+      for (const match of matches) {
+        await updateDoc(doc(db, 'matches', match.id), {
+          player1Legs: 0,
+          player2Legs: 0,
+          player1Submitted: false,
+          player2Submitted: false,
+          confirmed: false,
+          player1Stats: null,
+          player2Stats: null,
+          player1LegsSubmitted: 0,
+          player2LegsSubmitted: 0
+        })
+      }
+      
+      alert('✅ Tabelle erfolgreich zurückgesetzt!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Zurücksetzen der Tabelle: ' + err.message)
+    }
+  }
+
+  const handleResetStats = async () => {
+    if (!confirm('⚠️ Statistiken zurücksetzen?\n\nDies wird:\n- Alle Spieler-Statistiken löschen (180er, Shortlegs, High Finish, Average)\n- Top 3 Werte zurücksetzen\n\nTabelle und Spieltage bleiben erhalten!')) return
+    
+    try {
+      // Reset all player stats
+      for (const player of players) {
+        await updateDoc(doc(db, 'players', player.id), {
+          stats: {
+            shortlegs: 0,
+            oneEighties: 0,
+            highFinish: 0,
+            bestOfTen: 0,
+            averageData: { total: 0, count: 0 }
+          },
+          topStats: {
+            topShortlegs: [0, 0, 0],
+            topHighFinishes: [0, 0, 0]
+          }
+        })
+      }
+      
+      alert('✅ Statistiken erfolgreich zurückgesetzt!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Zurücksetzen der Statistiken: ' + err.message)
+    }
+  }
+
+  const handleResetMatchdays = async () => {
+    if (!confirm('⚠️ ACHTUNG: Alle Spieltage löschen?\n\nDies wird:\n- Alle Spieltage löschen\n- Alle Spiele löschen\n\nDiese Aktion kann NICHT rückgängig gemacht werden!')) return
+    
+    if (!confirm('Bist du dir WIRKLICH sicher? Alle Spieltage und Spiele gehen verloren!')) return
+    
+    try {
+      // Delete all matches
+      for (const match of matches) {
+        await deleteDoc(doc(db, 'matches', match.id))
+      }
+      
+      // Delete all matchdays
+      for (const matchday of matchdays) {
+        await deleteDoc(doc(db, 'matchdays', matchday.id))
+      }
+      
+      alert('✅ Alle Spieltage erfolgreich gelöscht!')
+      loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Löschen der Spieltage: ' + err.message)
+    }
+  }
+
   if (loading) return <div className="card"><p>Laden...</p></div>
   if (!isAdmin) return <div className="card"><p>Kein Zugriff. Nur für Admins.</p></div>
 
   return (
     <div>
       <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>⚙️ Admin-Panel</h2>
+      
+      <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-dart)' }}>
+        <h3 style={{ color: 'var(--accent-dart)' }}>⚠️ Reset-Funktionen</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
+          Wähle aus, was du zurücksetzen möchtest. Jede Funktion arbeitet unabhängig.
+        </p>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ marginBottom: '8px', fontSize: '16px' }}>📊 Tabelle zurücksetzen</h4>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              Setzt alle Spiele und Ergebnisse zurück. Statistiken und Spieltage bleiben erhalten.
+            </p>
+            <button 
+              className="btn btn-danger" 
+              onClick={handleResetTable}
+              style={{ width: '100%' }}
+            >
+              Tabelle zurücksetzen
+            </button>
+          </div>
+
+          <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ marginBottom: '8px', fontSize: '16px' }}>📈 Statistiken zurücksetzen</h4>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              Löscht alle Spieler-Statistiken (180er, Shortlegs, High Finish, Average). Tabelle und Spieltage bleiben erhalten.
+            </p>
+            <button 
+              className="btn btn-danger" 
+              onClick={handleResetStats}
+              style={{ width: '100%' }}
+            >
+              Statistiken zurücksetzen
+            </button>
+          </div>
+
+          <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid #ff3366' }}>
+            <h4 style={{ marginBottom: '8px', fontSize: '16px', color: 'var(--accent-dart)' }}>🗑️ Alle Spieltage löschen</h4>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <strong style={{ color: 'var(--accent-dart)' }}>ACHTUNG:</strong> Löscht alle Spieltage und Spiele permanent. Kann NICHT rückgängig gemacht werden!
+            </p>
+            <button 
+              className="btn btn-danger" 
+              onClick={handleResetMatchdays}
+              style={{ width: '100%', background: 'var(--accent-dart)', fontWeight: 'bold' }}
+            >
+              ⚠️ Alle Spieltage löschen
+            </button>
+          </div>
+        </div>
+      </div>
       
       <div className="card">
         <h3>{editingMatchday ? 'Spieltag bearbeiten' : 'Spieltag erstellen'}</h3>
