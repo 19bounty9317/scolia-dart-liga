@@ -55,13 +55,32 @@ function Spieltage({ user }) {
       })
       
       const matchdaysData = []
+      const now = new Date()
+      now.setHours(0, 0, 0, 0) // Reset to start of day for comparison
       
       matchdaysSnap.forEach(doc => {
         const mdId = doc.id
+        const mdData = doc.data()
         const status = matchdayStatuses[mdId] || { total: 0, confirmed: 0, hasError: false }
         
-        let statusIndicator = '🔴' // Red = open matches
-        if (status.hasError) {
+        // Get start and end dates
+        let startDate, endDate
+        if (mdData.startDate?.seconds) {
+          startDate = new Date(mdData.startDate.seconds * 1000)
+          endDate = new Date(mdData.endDate.seconds * 1000)
+        } else {
+          startDate = new Date(mdData.startDate)
+          endDate = new Date(mdData.endDate)
+        }
+        startDate.setHours(0, 0, 0, 0)
+        endDate.setHours(23, 59, 59, 999)
+        
+        let statusIndicator = '🔴' // Red = open matches (default)
+        
+        // Check if matchday is currently active (today is between start and end)
+        if (now >= startDate && now <= endDate) {
+          statusIndicator = '🟠' // Orange = current/active matchday
+        } else if (status.hasError) {
           statusIndicator = '⚠️' // Warning = error/mismatch
         } else if (status.total > 0 && status.confirmed === status.total) {
           statusIndicator = '🟢' // Green = all confirmed
@@ -69,7 +88,7 @@ function Spieltage({ user }) {
         
         matchdaysData.push({
           id: mdId,
-          ...doc.data(),
+          ...mdData,
           statusIndicator
         })
       })
