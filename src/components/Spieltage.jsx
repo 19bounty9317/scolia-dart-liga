@@ -40,10 +40,10 @@ function Spieltage({ user }) {
         })
       })
       
-      matchdaysData.sort((a, b) => b.week - a.week)
+      matchdaysData.sort((a, b) => a.week - b.week)
       setMatchdays(matchdaysData)
       
-      // Auto-select first matchday
+      // Auto-select first matchday (lowest week number)
       if (matchdaysData.length > 0) {
         setSelectedMatchdayId(matchdaysData[0].id)
       }
@@ -57,23 +57,30 @@ function Spieltage({ user }) {
   const loadMatches = async (matchdayId) => {
     setLoadingMatches(true)
     try {
-      const matchesSnap = await getDocs(collection(db, 'matches'))
+      // Load all players once
+      const playersSnap = await getDocs(collection(db, 'players'))
+      const playersMap = {}
+      playersSnap.forEach(doc => {
+        playersMap[doc.id] = doc.data().name
+      })
+      
+      // Load only matches for this matchday using query
+      const matchesQuery = query(
+        collection(db, 'matches'),
+        where('matchdayId', '==', matchdayId)
+      )
+      const matchesSnap = await getDocs(matchesQuery)
       const matchesData = []
       
-      for (const mDoc of matchesSnap.docs) {
+      matchesSnap.forEach(mDoc => {
         const match = mDoc.data()
-        if (match.matchdayId === matchdayId) {
-          const p1Doc = await getDoc(doc(db, 'players', match.player1Id))
-          const p2Doc = await getDoc(doc(db, 'players', match.player2Id))
-          
-          matchesData.push({
-            id: mDoc.id,
-            ...match,
-            player1Name: p1Doc.data()?.name || 'Unbekannt',
-            player2Name: p2Doc.data()?.name || 'Unbekannt'
-          })
-        }
-      }
+        matchesData.push({
+          id: mDoc.id,
+          ...match,
+          player1Name: playersMap[match.player1Id] || 'Unbekannt',
+          player2Name: playersMap[match.player2Id] || 'Unbekannt'
+        })
+      })
       
       setMatches(matchesData)
     } catch (err) {
