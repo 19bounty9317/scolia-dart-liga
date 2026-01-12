@@ -32,7 +32,8 @@ function Tabelle() {
           losses: 0,
           legsWon: 0,
           legsLost: 0,
-          legDiff: 0
+          legDiff: 0,
+          pastTrophies: data.pastTrophies || [] // z.B. ['gold', 'silver'] für vergangene Seasons
         }
       })
       
@@ -108,21 +109,38 @@ function Tabelle() {
             </tr>
           </thead>
           <tbody>
-            {standings.map((player, index) => (
-              <tr key={index}>
-                <td><strong>{index + 1}</strong></td>
-                <td><OnlineStatus userId={player.id} /></td>
-                <td>{player.name}</td>
-                <td><strong>{player.points}</strong></td>
-                <td>{player.wins}</td>
-                <td>{player.draws}</td>
-                <td>{player.losses}</td>
-                <td>{player.legsWon}:{player.legsLost}</td>
-                <td style={{ color: player.legDiff > 0 ? 'green' : player.legDiff < 0 ? 'red' : 'white' }}>
-                  {player.legDiff > 0 ? '+' : ''}{player.legDiff}
-                </td>
-              </tr>
-            ))}
+            {standings.map((player, index) => {
+              // Aktuelle Season: Kronen für Platz 1-3
+              const currentCrown = index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : ''
+              
+              // Vergangene Trophäen (hinter dem Namen)
+              const pastTrophyIcons = player.pastTrophies?.map((trophy, i) => {
+                if (trophy === 'gold') return '🏆'
+                if (trophy === 'silver') return '🥈'
+                if (trophy === 'bronze') return '🥉'
+                return ''
+              }).join('') || ''
+              
+              return (
+                <tr key={index}>
+                  <td><strong>{index + 1}</strong></td>
+                  <td><OnlineStatus userId={player.id} /></td>
+                  <td>
+                    {currentCrown && <span style={{ marginRight: '6px' }}>{currentCrown}</span>}
+                    {player.name}
+                    {pastTrophyIcons && <span style={{ marginLeft: '6px', opacity: 0.8 }}>{pastTrophyIcons}</span>}
+                  </td>
+                  <td><strong>{player.points}</strong></td>
+                  <td>{player.wins}</td>
+                  <td>{player.draws}</td>
+                  <td>{player.losses}</td>
+                  <td>{player.legsWon}:{player.legsLost}</td>
+                  <td style={{ color: player.legDiff > 0 ? 'green' : player.legDiff < 0 ? 'red' : 'white' }}>
+                    {player.legDiff > 0 ? '+' : ''}{player.legDiff}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

@@ -14,10 +14,22 @@ function AdminPanel({ user }) {
   const [selectedMatchday, setSelectedMatchday] = useState('')
   const [matches, setMatches] = useState([])
   const [editingMatchday, setEditingMatchday] = useState(null)
+  const [editingMatchdayMatches, setEditingMatchdayMatches] = useState([])
+  const [editingMatch, setEditingMatch] = useState(null)
+  const [editPlayer1Legs, setEditPlayer1Legs] = useState('')
+  const [editPlayer2Legs, setEditPlayer2Legs] = useState('')
 
   useEffect(() => {
     checkAdmin()
   }, [user])
+
+  // Update editingMatchdayMatches when matches change
+  useEffect(() => {
+    if (editingMatchday) {
+      const matchdayMatches = matches.filter(m => m.matchdayId === editingMatchday.id)
+      setEditingMatchdayMatches(matchdayMatches)
+    }
+  }, [matches, editingMatchday])
 
   const checkAdmin = async () => {
     try {
@@ -158,13 +170,10 @@ function AdminPanel({ user }) {
       // Handle different date formats
       let startDate
       if (matchday.startDate?.seconds) {
-        // Firestore Timestamp
         startDate = new Date(matchday.startDate.seconds * 1000)
       } else if (matchday.startDate?.toDate) {
-        // Firestore Timestamp object
         startDate = matchday.startDate.toDate()
       } else if (matchday.startDate) {
-        // Regular Date or string
         startDate = new Date(matchday.startDate)
       } else {
         startDate = new Date()
@@ -173,10 +182,70 @@ function AdminPanel({ user }) {
       const dateString = startDate.toISOString().split('T')[0]
       console.log('Setting date to:', dateString)
       setDate(dateString)
+      
+      // Load matches for this matchday
+      const matchdayMatches = matches.filter(m => m.matchdayId === matchday.id)
+      setEditingMatchdayMatches(matchdayMatches)
     } catch (err) {
       console.error('Fehler beim Bearbeiten:', err)
       alert('Fehler beim Laden der Daten: ' + err.message)
     }
+  }
+
+  const handleEditMatch = (match) => {
+    setEditingMatch(match)
+    setEditPlayer1Legs(match.player1Legs?.toString() || '0')
+    setEditPlayer2Legs(match.player2Legs?.toString() || '0')
+  }
+
+  const handleSaveMatchResult = async () => {
+    if (!editingMatch) return
+    
+    const legs1 = parseInt(editPlayer1Legs)
+    const legs2 = parseInt(editPlayer2Legs)
+    
+    // Validierung: Best of 10
+    const maxLegs = Math.max(legs1, legs2)
+    const minLegs = Math.min(legs1, legs2)
+    const isValidResult = (maxLegs === 6 && minLegs >= 0 && minLegs <= 5) || 
+                          (legs1 === 5 && legs2 === 5) ||
+                          (legs1 === 0 && legs2 === 0) // Erlaubt Reset auf 0:0
+    
+    if (!isValidResult && !(legs1 === 0 && legs2 === 0)) {
+      alert('Ungültiges Ergebnis! Bei Best of 10 gewinnt wer zuerst 6 Legs hat (z.B. 6:0, 6:3, 6:5) oder es endet 5:5 unentschieden.')
+      return
+    }
+    
+    try {
+      const isReset = legs1 === 0 && legs2 === 0
+      
+      await updateDoc(doc(db, 'matches', editingMatch.id), {
+        player1Legs: legs1,
+        player2Legs: legs2,
+        player1LegsSubmitted: legs1,
+        player2LegsSubmitted: legs2,
+        player1Submitted: !isReset,
+        player2Submitted: !isReset,
+        confirmed: !isReset
+      })
+      
+      alert(isReset ? 'Spiel zurückgesetzt!' : 'Ergebnis gespeichert und bestätigt!')
+      setEditingMatch(null)
+      setEditPlayer1Legs('')
+      setEditPlayer2Legs('')
+      await loadData()
+    } catch (err) {
+      console.error('Fehler:', err)
+      alert('Fehler beim Speichern: ' + err.message)
+    }
+  }
+
+  const handleCloseMatchdayEdit = () => {
+    setEditingMatchday(null)
+    setEditingMatchdayMatches([])
+    setEditingMatch(null)
+    setWeek('')
+    setDate('')
   }
 
   const handleUpdateMatchday = async () => {
@@ -411,16 +480,125 @@ function AdminPanel({ user }) {
             <button className="btn btn-primary" onClick={handleUpdateMatchday}>
               Spieltag aktualisieren
             </button>
-            <button className="btn btn-secondary" onClick={() => {
-              setEditingMatchday(null)
-              setWeek('')
-              setDate('')
-            }}>
+            <button className="btn btn-secondary" onClick={handleCloseMatchdayEdit}>
               Abbrechen
             </button>
           </div>
         )}
       </div>
+
+      {/* Spieltag-Bearbeitungs-Modal */}
+      {editingMatchday && (
+        <div className="card" style={{ border: '2px solid var(--accent-primary)', marginBottom: '20px' }}>
+          <h3 style={{ color: 'var(--accent-primary)' }}>
+            📋 Spiele in Woche {editingMatchday.week}
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
+            Klicke auf "Ergebnis ändern" um das Ergebnis eines Spiels zu bearbeiten.
+          </p>
+          
+          {editingMatchdayMatches.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)' }}>Keine Spiele für diesen Spieltag</p>
+          ) : (
+            editingMatchdayMatches.map(match => (
+              <div key={match.id} style={{ 
+                padding: '16px', 
+                background: 'var(--bg-secondary)', 
+                borderRadius: '12px', 
+                marginBottom: '12px',
+                border: editingMatch?.id === match.id ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <strong style={{ fontSize: '16px' }}>{match.player1Name} vs {match.player2Name}</strong>
+                    {match.confirmed ? (
+                      <span style={{ marginLeft: '12px', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                        ✓ {match.player1Legs}:{match.player2Legs}
+                      </span>
+                    ) : match.player1Submitted || match.player2Submitted ? (
+                      <span style={{ marginLeft: '12px', color: '#ed8936' }}>
+                        ⏳ Ausstehend
+                      </span>
+                    ) : (
+                      <span style={{ marginLeft: '12px', color: 'var(--text-secondary)' }}>
+                        ⏸️ Offen
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => handleEditMatch(match)}
+                    style={{ fontSize: '14px', padding: '8px 16px' }}
+                  >
+                    Ergebnis ändern
+                  </button>
+                </div>
+                
+                {/* Inline-Bearbeitung für dieses Match */}
+                {editingMatch?.id === match.id && (
+                  <div style={{ 
+                    marginTop: '16px', 
+                    padding: '16px', 
+                    background: 'var(--bg-primary)', 
+                    borderRadius: '8px',
+                    border: '1px solid var(--accent-primary)'
+                  }}>
+                    <h4 style={{ marginBottom: '12px', color: 'var(--accent-primary)' }}>Ergebnis bearbeiten</h4>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '120px' }}>
+                        <label style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                          {match.player1Name}
+                        </label>
+                        <input
+                          type="number"
+                          value={editPlayer1Legs}
+                          onChange={(e) => setEditPlayer1Legs(e.target.value)}
+                          min="0"
+                          max="6"
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                      <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>:</span>
+                      <div style={{ flex: 1, minWidth: '120px' }}>
+                        <label style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                          {match.player2Name}
+                        </label>
+                        <input
+                          type="number"
+                          value={editPlayer2Legs}
+                          onChange={(e) => setEditPlayer2Legs(e.target.value)}
+                          min="0"
+                          max="6"
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                      Best of 10: Gültige Ergebnisse sind 6:0 bis 6:5 (oder umgekehrt) und 5:5. Setze auf 0:0 zum Zurücksetzen.
+                    </p>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                      <button className="btn btn-primary" onClick={handleSaveMatchResult}>
+                        Speichern
+                      </button>
+                      <button className="btn btn-secondary" onClick={() => setEditingMatch(null)}>
+                        Abbrechen
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+          
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleCloseMatchdayEdit}
+            style={{ marginTop: '12px' }}
+          >
+            Spieltag-Bearbeitung schließen
+          </button>
+        </div>
+      )}
 
       <div className="card">
         <h3>Spiel erstellen</h3>

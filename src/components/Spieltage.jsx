@@ -149,8 +149,17 @@ function Spieltage({ user }) {
     const legs1 = parseInt(player1Legs)
     const legs2 = parseInt(player2Legs)
     
-    if (legs1 + legs2 !== 10) {
-      alert('Die Summe der Legs muss 10 ergeben (Best of 10)!')
+    // Best of 10: Gewinner braucht 6 Legs, Verlierer kann max 5 haben
+    // Gültige Ergebnisse: 6:0, 6:1, 6:2, 6:3, 6:4, 6:5 (oder umgekehrt)
+    // Unentschieden: 5:5
+    const maxLegs = Math.max(legs1, legs2)
+    const minLegs = Math.min(legs1, legs2)
+    
+    const isValidResult = (maxLegs === 6 && minLegs >= 0 && minLegs <= 5) || 
+                          (legs1 === 5 && legs2 === 5) // Unentschieden
+    
+    if (!isValidResult || legs1 < 0 || legs2 < 0 || legs1 > 6 || legs2 > 6) {
+      alert('Ungültiges Ergebnis! Bei Best of 10 gewinnt wer zuerst 6 Legs hat (z.B. 6:0, 6:3, 6:5) oder es endet 5:5 unentschieden.')
       return
     }
     
@@ -404,7 +413,7 @@ function Spieltage({ user }) {
             <h3>Ergebnis eintragen</h3>
             <p>{selectedMatch.player1Name} vs {selectedMatch.player2Name}</p>
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
-              Best of 10 Legs (Summe muss 10 ergeben)<br/>
+              Best of 10 Legs (First to 6 gewinnt, z.B. 6:0, 6:3, 6:5 oder 5:5 unentschieden)<br/>
               <strong style={{ color: 'var(--accent-primary)' }}>Sieg = 3 Punkte</strong> | Unentschieden = 1 Punkt
             </p>
             <input
