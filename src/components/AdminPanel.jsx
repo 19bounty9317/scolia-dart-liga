@@ -162,11 +162,6 @@ function AdminPanel({ user }) {
   }
 
   const handleEditMatchday = (matchday) => {
-    console.log('Editing matchday:', matchday)
-    console.log('Matchday ID:', matchday.id)
-    console.log('All matches:', matches)
-    console.log('All match matchdayIds:', matches.map(m => m.matchdayId))
-    
     try {
       setEditingMatchday(matchday)
       setWeek(matchday.week.toString())
@@ -187,11 +182,7 @@ function AdminPanel({ user }) {
       setDate(dateString)
       
       // Load matches for this matchday
-      const matchdayMatches = matches.filter(m => {
-        console.log('Comparing:', m.matchdayId, '===', matchday.id, '=', m.matchdayId === matchday.id)
-        return m.matchdayId === matchday.id
-      })
-      console.log('Filtered matches:', matchdayMatches)
+      const matchdayMatches = matches.filter(m => m.matchdayId === matchday.id)
       setEditingMatchdayMatches(matchdayMatches)
     } catch (err) {
       console.error('Fehler beim Bearbeiten:', err)

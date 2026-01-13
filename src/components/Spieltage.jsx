@@ -284,8 +284,12 @@ function Spieltage({ user }) {
       const updatedData = updatedDoc.data()
       
       if (updatedData.player1Submitted && updatedData.player2Submitted) {
-        if (updatedData.player1Legs === updatedData.player1LegsSubmitted &&
-            updatedData.player2Legs === updatedData.player2LegsSubmitted) {
+        // Player1 speichert: player1Legs, player2Legs
+        // Player2 speichert: player2LegsSubmitted (seine Legs), player1LegsSubmitted (Gegner Legs)
+        // Vergleich: player1Legs muss gleich player2LegsSubmitted sein (beide = Player1's Legs)
+        //            player2Legs muss gleich player1LegsSubmitted sein (beide = Player2's Legs)
+        if (updatedData.player1Legs === updatedData.player2LegsSubmitted &&
+            updatedData.player2Legs === updatedData.player1LegsSubmitted) {
           await updateDoc(matchRef, { confirmed: true })
           alert('Ergebnis bestätigt!')
         } else {
