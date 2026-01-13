@@ -233,8 +233,8 @@ function Spieltage({ user }) {
           return
         }
         await updateDoc(matchRef, {
-          player2LegsSubmitted: legs1,
-          player1LegsSubmitted: legs2,
+          player1LegsSubmitted: legs1,  // legs1 = Player1's Legs (Joy)
+          player2LegsSubmitted: legs2,  // legs2 = Player2's Legs (Patty)
           player2Submitted: true,
           player2Stats: stats
         })
@@ -285,11 +285,10 @@ function Spieltage({ user }) {
       
       if (updatedData.player1Submitted && updatedData.player2Submitted) {
         // Player1 speichert: player1Legs, player2Legs
-        // Player2 speichert: player2LegsSubmitted (seine Legs), player1LegsSubmitted (Gegner Legs)
-        // Vergleich: player1Legs muss gleich player2LegsSubmitted sein (beide = Player1's Legs)
-        //            player2Legs muss gleich player1LegsSubmitted sein (beide = Player2's Legs)
-        if (updatedData.player1Legs === updatedData.player2LegsSubmitted &&
-            updatedData.player2Legs === updatedData.player1LegsSubmitted) {
+        // Player2 speichert: player1LegsSubmitted, player2LegsSubmitted
+        // Beide speichern aus der gleichen Perspektive (Player1 zuerst, Player2 danach)
+        if (updatedData.player1Legs === updatedData.player1LegsSubmitted &&
+            updatedData.player2Legs === updatedData.player2LegsSubmitted) {
           await updateDoc(matchRef, { confirmed: true })
           alert('Ergebnis bestätigt!')
         } else {
