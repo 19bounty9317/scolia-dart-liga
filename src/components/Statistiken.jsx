@@ -40,7 +40,7 @@ function Statistiken() {
   const getTopShortlegs = () => {
     return [...stats]
       .filter(p => p.shortlegs > 0)
-      .sort((a, b) => b.shortlegs - a.shortlegs)
+      .sort((a, b) => a.shortlegs - b.shortlegs) // Kleinere Zahl = besser
       .slice(0, 3)
   }
 
