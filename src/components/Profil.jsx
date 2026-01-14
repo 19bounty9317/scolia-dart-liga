@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { Link } from 'react-router-dom'
 
@@ -28,8 +28,74 @@ function Profil({ user }) {
       if (playerDoc.exists()) {
         const data = playerDoc.data()
         setPlayerData(data)
-        setStats(data.stats || stats)
-        setTopStats(data.topStats || topStats)
+        
+        // Calculate stats from matches
+        const matchesSnap = await getDocs(collection(db, 'matches'))
+        let shortlegs = 0
+        let oneEighties = 0
+        let highFinish = 0
+        let bestOfTenTotal = 0
+        let bestOfTenCount = 0
+        const allShortlegs = []
+        const allHighFinishes = []
+        
+        matchesSnap.forEach(mDoc => {
+          const match = mDoc.data()
+          if (!match.confirmed) return
+          
+          let playerStats = null
+          if (match.player1Id === user.uid && match.player1Stats) {
+            playerStats = match.player1Stats
+          } else if (match.player2Id === user.uid && match.player2Stats) {
+            playerStats = match.player2Stats
+          }
+          
+          if (playerStats) {
+            shortlegs += playerStats.shortlegs || 0
+            oneEighties += playerStats.oneEighties || 0
+            highFinish = Math.max(highFinish, playerStats.highFinish || 0)
+            
+            if (playerStats.bestOfTen > 0) {
+              bestOfTenTotal += playerStats.bestOfTen
+              bestOfTenCount += 1
+            }
+            
+            if (playerStats.shortlegs > 0) {
+              allShortlegs.push(playerStats.shortlegs)
+            }
+            if (playerStats.highFinish > 0) {
+              allHighFinishes.push(playerStats.highFinish)
+            }
+          }
+        })
+        
+        const bestOfTen = bestOfTenCount > 0 
+          ? Math.round((bestOfTenTotal / bestOfTenCount) * 10) / 10 
+          : 0
+        
+        // Calculate Top 3
+        const topShortlegs = allShortlegs
+          .sort((a, b) => a - b)
+          .slice(0, 3)
+        while (topShortlegs.length < 3) topShortlegs.push(0)
+        
+        const topHighFinishes = allHighFinishes
+          .sort((a, b) => b - a)
+          .slice(0, 3)
+        while (topHighFinishes.length < 3) topHighFinishes.push(0)
+        
+        setStats({
+          shortlegs,
+          oneEighties,
+          highFinish,
+          bestOfTen,
+          averageData: { total: bestOfTenTotal, count: bestOfTenCount }
+        })
+        
+        setTopStats({
+          topShortlegs,
+          topHighFinishes
+        })
       }
     } catch (err) {
       console.error('Fehler beim Laden des Profils:', err)

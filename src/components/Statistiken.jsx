@@ -13,21 +13,69 @@ function Statistiken() {
   const loadStats = async () => {
     try {
       const playersSnap = await getDocs(collection(db, 'players'))
-      const statsData = []
+      const matchesSnap = await getDocs(collection(db, 'matches'))
+      
+      // Build player stats from matches
+      const playerStats = {}
       
       playersSnap.forEach(doc => {
         const data = doc.data()
-        // Skip test accounts
         if (data.isTestAccount) return
         
-        statsData.push({
+        playerStats[doc.id] = {
           name: data.name,
-          shortlegs: data.stats?.shortlegs || 0,
-          oneEighties: data.stats?.oneEighties || 0,
-          highFinish: data.stats?.highFinish || 0,
-          bestOfTen: data.stats?.bestOfTen || 0
-        })
+          shortlegs: 0,
+          oneEighties: 0,
+          highFinish: 0,
+          bestOfTenTotal: 0,
+          bestOfTenCount: 0,
+          bestOfTen: 0
+        }
       })
+      
+      // Aggregate stats from all confirmed matches
+      matchesSnap.forEach(doc => {
+        const match = doc.data()
+        if (!match.confirmed) return
+        
+        // Player 1 stats
+        if (playerStats[match.player1Id] && match.player1Stats) {
+          const stats = match.player1Stats
+          playerStats[match.player1Id].shortlegs += stats.shortlegs || 0
+          playerStats[match.player1Id].oneEighties += stats.oneEighties || 0
+          playerStats[match.player1Id].highFinish = Math.max(
+            playerStats[match.player1Id].highFinish,
+            stats.highFinish || 0
+          )
+          if (stats.bestOfTen > 0) {
+            playerStats[match.player1Id].bestOfTenTotal += stats.bestOfTen
+            playerStats[match.player1Id].bestOfTenCount += 1
+          }
+        }
+        
+        // Player 2 stats
+        if (playerStats[match.player2Id] && match.player2Stats) {
+          const stats = match.player2Stats
+          playerStats[match.player2Id].shortlegs += stats.shortlegs || 0
+          playerStats[match.player2Id].oneEighties += stats.oneEighties || 0
+          playerStats[match.player2Id].highFinish = Math.max(
+            playerStats[match.player2Id].highFinish,
+            stats.highFinish || 0
+          )
+          if (stats.bestOfTen > 0) {
+            playerStats[match.player2Id].bestOfTenTotal += stats.bestOfTen
+            playerStats[match.player2Id].bestOfTenCount += 1
+          }
+        }
+      })
+      
+      // Calculate averages
+      const statsData = Object.values(playerStats).map(p => ({
+        ...p,
+        bestOfTen: p.bestOfTenCount > 0 
+          ? Math.round((p.bestOfTenTotal / p.bestOfTenCount) * 10) / 10 
+          : 0
+      }))
       
       setStats(statsData)
     } catch (err) {

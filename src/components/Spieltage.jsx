@@ -187,46 +187,6 @@ function Spieltage({ user }) {
           player1Submitted: true,
           player1Stats: stats
         })
-        
-        // Update player stats and top values
-        const playerRef = doc(db, 'players', user.uid)
-        const playerDoc = await getDoc(playerRef)
-        const currentStats = playerDoc.data().stats || {}
-        const currentTopStats = playerDoc.data().topStats || { topShortlegs: [0, 0, 0], topHighFinishes: [0, 0, 0] }
-        
-        // Calculate new average
-        const currentAvgData = currentStats.averageData || { total: 0, count: 0 }
-        const newTotal = currentAvgData.total + stats.bestOfTen
-        const newCount = stats.bestOfTen > 0 ? currentAvgData.count + 1 : currentAvgData.count
-        const newAverage = newCount > 0 ? Math.round((newTotal / newCount) * 10) / 10 : 0
-        
-        // Update top shortlegs if new value is better
-        const newTopShortlegs = [...currentTopStats.topShortlegs, stats.shortlegs]
-          .filter(v => v > 0)
-          .sort((a, b) => a - b) // Sort ascending (lower is better for shortlegs)
-          .slice(0, 3)
-        while (newTopShortlegs.length < 3) newTopShortlegs.push(0)
-        
-        // Update top high finishes if new value is better
-        const newTopHighFinishes = [...currentTopStats.topHighFinishes, stats.highFinish]
-          .filter(v => v > 0)
-          .sort((a, b) => b - a) // Sort descending (higher is better)
-          .slice(0, 3)
-        while (newTopHighFinishes.length < 3) newTopHighFinishes.push(0)
-        
-        await updateDoc(playerRef, {
-          stats: {
-            shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
-            oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
-            highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
-            bestOfTen: newAverage,
-            averageData: { total: newTotal, count: newCount }
-          },
-          topStats: {
-            topShortlegs: newTopShortlegs,
-            topHighFinishes: newTopHighFinishes
-          }
-        })
       } else {
         if (currentData.player2Submitted) {
           alert('Du hast bereits ein Ergebnis eingereicht!')
@@ -237,46 +197,6 @@ function Spieltage({ user }) {
           player2LegsSubmitted: legs2,  // legs2 = Player2's Legs (Patty)
           player2Submitted: true,
           player2Stats: stats
-        })
-        
-        // Update player stats and top values
-        const playerRef = doc(db, 'players', user.uid)
-        const playerDoc = await getDoc(playerRef)
-        const currentStats = playerDoc.data().stats || {}
-        const currentTopStats = playerDoc.data().topStats || { topShortlegs: [0, 0, 0], topHighFinishes: [0, 0, 0] }
-        
-        // Calculate new average
-        const currentAvgData = currentStats.averageData || { total: 0, count: 0 }
-        const newTotal = currentAvgData.total + stats.bestOfTen
-        const newCount = stats.bestOfTen > 0 ? currentAvgData.count + 1 : currentAvgData.count
-        const newAverage = newCount > 0 ? Math.round((newTotal / newCount) * 10) / 10 : 0
-        
-        // Update top shortlegs if new value is better
-        const newTopShortlegs = [...currentTopStats.topShortlegs, stats.shortlegs]
-          .filter(v => v > 0)
-          .sort((a, b) => a - b) // Sort ascending (lower is better for shortlegs)
-          .slice(0, 3)
-        while (newTopShortlegs.length < 3) newTopShortlegs.push(0)
-        
-        // Update top high finishes if new value is better
-        const newTopHighFinishes = [...currentTopStats.topHighFinishes, stats.highFinish]
-          .filter(v => v > 0)
-          .sort((a, b) => b - a) // Sort descending (higher is better)
-          .slice(0, 3)
-        while (newTopHighFinishes.length < 3) newTopHighFinishes.push(0)
-        
-        await updateDoc(playerRef, {
-          stats: {
-            shortlegs: (currentStats.shortlegs || 0) + stats.shortlegs,
-            oneEighties: (currentStats.oneEighties || 0) + stats.oneEighties,
-            highFinish: Math.max(currentStats.highFinish || 0, stats.highFinish),
-            bestOfTen: newAverage,
-            averageData: { total: newTotal, count: newCount }
-          },
-          topStats: {
-            topShortlegs: newTopShortlegs,
-            topHighFinishes: newTopHighFinishes
-          }
         })
       }
       
