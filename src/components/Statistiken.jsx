@@ -24,12 +24,10 @@ function Statistiken() {
         
         playerStats[doc.id] = {
           name: data.name,
-          shortlegs: 0,
-          oneEighties: 0,
-          highFinish: 0,
-          bestOfTenTotal: 0,
-          bestOfTenCount: 0,
-          bestOfTen: 0
+          shortlegs: 0,      // Bester (kleinster) Wert
+          oneEighties: 0,    // Summe
+          highFinish: 0,     // Bester (höchster) Wert
+          bestOfTen: 0       // Bester (höchster) Wert
         }
       })
       
@@ -41,42 +39,73 @@ function Statistiken() {
         // Player 1 stats
         if (playerStats[match.player1Id] && match.player1Stats) {
           const stats = match.player1Stats
-          playerStats[match.player1Id].shortlegs += stats.shortlegs || 0
+          
+          // Shortlegs: Nur bester (kleinster) Wert, aber nur wenn > 0
+          if (stats.shortlegs > 0) {
+            if (playerStats[match.player1Id].shortlegs === 0) {
+              playerStats[match.player1Id].shortlegs = stats.shortlegs
+            } else {
+              playerStats[match.player1Id].shortlegs = Math.min(
+                playerStats[match.player1Id].shortlegs,
+                stats.shortlegs
+              )
+            }
+          }
+          
+          // 180er: Summe
           playerStats[match.player1Id].oneEighties += stats.oneEighties || 0
+          
+          // High Finish: Bester (höchster) Wert
           playerStats[match.player1Id].highFinish = Math.max(
             playerStats[match.player1Id].highFinish,
             stats.highFinish || 0
           )
+          
+          // Average: Bester (höchster) Wert
           if (stats.bestOfTen > 0) {
-            playerStats[match.player1Id].bestOfTenTotal += stats.bestOfTen
-            playerStats[match.player1Id].bestOfTenCount += 1
+            playerStats[match.player1Id].bestOfTen = Math.max(
+              playerStats[match.player1Id].bestOfTen,
+              stats.bestOfTen
+            )
           }
         }
         
         // Player 2 stats
         if (playerStats[match.player2Id] && match.player2Stats) {
           const stats = match.player2Stats
-          playerStats[match.player2Id].shortlegs += stats.shortlegs || 0
+          
+          // Shortlegs: Nur bester (kleinster) Wert, aber nur wenn > 0
+          if (stats.shortlegs > 0) {
+            if (playerStats[match.player2Id].shortlegs === 0) {
+              playerStats[match.player2Id].shortlegs = stats.shortlegs
+            } else {
+              playerStats[match.player2Id].shortlegs = Math.min(
+                playerStats[match.player2Id].shortlegs,
+                stats.shortlegs
+              )
+            }
+          }
+          
+          // 180er: Summe
           playerStats[match.player2Id].oneEighties += stats.oneEighties || 0
+          
+          // High Finish: Bester (höchster) Wert
           playerStats[match.player2Id].highFinish = Math.max(
             playerStats[match.player2Id].highFinish,
             stats.highFinish || 0
           )
+          
+          // Average: Bester (höchster) Wert
           if (stats.bestOfTen > 0) {
-            playerStats[match.player2Id].bestOfTenTotal += stats.bestOfTen
-            playerStats[match.player2Id].bestOfTenCount += 1
+            playerStats[match.player2Id].bestOfTen = Math.max(
+              playerStats[match.player2Id].bestOfTen,
+              stats.bestOfTen
+            )
           }
         }
       })
       
-      // Calculate averages
-      const statsData = Object.values(playerStats).map(p => ({
-        ...p,
-        bestOfTen: p.bestOfTenCount > 0 
-          ? Math.round((p.bestOfTenTotal / p.bestOfTenCount) * 10) / 10 
-          : 0
-      }))
-      
+      const statsData = Object.values(playerStats)
       setStats(statsData)
     } catch (err) {
       console.error('Fehler beim Laden der Statistiken:', err)
@@ -128,6 +157,9 @@ function Statistiken() {
         
         <div className="card">
           <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>🏆 Top 3 Shortlegs</h3>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+            Bester Shortleg pro Spieler
+          </p>
           {topShortlegs.length > 0 ? (
             topShortlegs.map((player, index) => (
               <div key={index} style={{ 
@@ -243,7 +275,7 @@ function Statistiken() {
         <div className="card">
           <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>📈 Top 3 Average</h3>
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-            Durchschnitt über alle Spiele
+            Bester Average pro Spieler
           </p>
           {topAverage.length > 0 ? (
             topAverage.map((player, index) => (
@@ -289,20 +321,20 @@ function Statistiken() {
             <thead>
               <tr>
                 <th>Spieler</th>
-                <th>Shortlegs</th>
-                <th>180er</th>
+                <th>Bester Shortleg</th>
+                <th>180er (Gesamt)</th>
                 <th>High Finish</th>
-                <th>Ø Average</th>
+                <th>Bester Ø</th>
               </tr>
             </thead>
             <tbody>
               {stats.map((player, index) => (
                 <tr key={index}>
                   <td><strong>{player.name}</strong></td>
-                  <td>{player.shortlegs}</td>
+                  <td>{player.shortlegs || '-'}</td>
                   <td>{player.oneEighties}</td>
-                  <td>{player.highFinish}</td>
-                  <td>{player.bestOfTen}</td>
+                  <td>{player.highFinish || '-'}</td>
+                  <td>{player.bestOfTen || '-'}</td>
                 </tr>
               ))}
             </tbody>

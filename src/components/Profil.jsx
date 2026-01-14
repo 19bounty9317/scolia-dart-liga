@@ -31,11 +31,11 @@ function Profil({ user }) {
         
         // Calculate stats from matches
         const matchesSnap = await getDocs(collection(db, 'matches'))
-        let shortlegs = 0
-        let oneEighties = 0
-        let highFinish = 0
-        let bestOfTenTotal = 0
-        let bestOfTenCount = 0
+        let shortlegs = 0        // Bester (kleinster) Wert
+        let oneEighties = 0      // Summe
+        let highFinish = 0       // Bester (höchster) Wert
+        let bestOfTen = 0        // Bester (höchster) Wert
+        let matchCount = 0
         const allShortlegs = []
         const allHighFinishes = []
         
@@ -51,27 +51,33 @@ function Profil({ user }) {
           }
           
           if (playerStats) {
-            shortlegs += playerStats.shortlegs || 0
-            oneEighties += playerStats.oneEighties || 0
-            highFinish = Math.max(highFinish, playerStats.highFinish || 0)
+            matchCount++
             
-            if (playerStats.bestOfTen > 0) {
-              bestOfTenTotal += playerStats.bestOfTen
-              bestOfTenCount += 1
-            }
-            
+            // Shortlegs: Nur bester (kleinster) Wert
             if (playerStats.shortlegs > 0) {
+              if (shortlegs === 0) {
+                shortlegs = playerStats.shortlegs
+              } else {
+                shortlegs = Math.min(shortlegs, playerStats.shortlegs)
+              }
               allShortlegs.push(playerStats.shortlegs)
             }
+            
+            // 180er: Summe
+            oneEighties += playerStats.oneEighties || 0
+            
+            // High Finish: Bester (höchster) Wert
+            highFinish = Math.max(highFinish, playerStats.highFinish || 0)
             if (playerStats.highFinish > 0) {
               allHighFinishes.push(playerStats.highFinish)
             }
+            
+            // Average: Bester (höchster) Wert
+            if (playerStats.bestOfTen > 0) {
+              bestOfTen = Math.max(bestOfTen, playerStats.bestOfTen)
+            }
           }
         })
-        
-        const bestOfTen = bestOfTenCount > 0 
-          ? Math.round((bestOfTenTotal / bestOfTenCount) * 10) / 10 
-          : 0
         
         // Calculate Top 3
         const topShortlegs = allShortlegs
@@ -89,7 +95,7 @@ function Profil({ user }) {
           oneEighties,
           highFinish,
           bestOfTen,
-          averageData: { total: bestOfTenTotal, count: bestOfTenCount }
+          averageData: { count: matchCount }
         })
         
         setTopStats({
@@ -175,10 +181,10 @@ function Profil({ user }) {
 
         {!editing ? (
           <div>
-            <p><strong>Shortlegs:</strong> {stats.shortlegs}</p>
+            <p><strong>Shortlegs:</strong> {stats.shortlegs || '-'}</p>
             <p><strong>180er:</strong> {stats.oneEighties}</p>
-            <p><strong>High Finish:</strong> {stats.highFinish}</p>
-            <p><strong>Ø Average:</strong> {stats.bestOfTen} {stats.averageData?.count > 0 && `(aus ${stats.averageData.count} Spielen)`}</p>
+            <p><strong>High Finish:</strong> {stats.highFinish || '-'}</p>
+            <p><strong>Bester Average:</strong> {stats.bestOfTen || '-'}</p>
           </div>
         ) : (
           <div>
