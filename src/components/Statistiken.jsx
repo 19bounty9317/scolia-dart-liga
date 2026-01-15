@@ -5,6 +5,7 @@ import { db } from '../firebase'
 function Statistiken() {
   const [stats, setStats] = useState([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('180er') // 180er, shortlegs, highFinish, average
 
   useEffect(() => {
     loadStats()
@@ -114,229 +115,156 @@ function Statistiken() {
     }
   }
 
-  const getTopShortlegs = () => {
-    return [...stats]
-      .filter(p => p.shortlegs > 0)
-      .sort((a, b) => a.shortlegs - b.shortlegs) // Kleinere Zahl = besser
-      .slice(0, 3)
-  }
+  const getSortedStats = () => {
+    const filtered = stats.filter(p => {
+      if (activeTab === '180er') return p.oneEighties > 0
+      if (activeTab === 'shortlegs') return p.shortlegs > 0
+      if (activeTab === 'highFinish') return p.highFinish > 0
+      if (activeTab === 'average') return p.bestOfTen > 0
+      return false
+    })
 
-  const getTopHighFinish = () => {
-    return [...stats]
-      .filter(p => p.highFinish > 0)
-      .sort((a, b) => b.highFinish - a.highFinish)
-      .slice(0, 3)
-  }
-
-  const getTopOneEighties = () => {
-    return [...stats]
-      .filter(p => p.oneEighties > 0)
-      .sort((a, b) => b.oneEighties - a.oneEighties)
-      .slice(0, 3)
-  }
-
-  const getTopAverage = () => {
-    return [...stats]
-      .filter(p => p.bestOfTen > 0)
-      .sort((a, b) => b.bestOfTen - a.bestOfTen)
-      .slice(0, 3)
+    return filtered.sort((a, b) => {
+      if (activeTab === '180er') return b.oneEighties - a.oneEighties
+      if (activeTab === 'shortlegs') return a.shortlegs - b.shortlegs // Kleiner = besser
+      if (activeTab === 'highFinish') return b.highFinish - a.highFinish
+      if (activeTab === 'average') return b.bestOfTen - a.bestOfTen
+      return 0
+    })
   }
 
   if (loading) return <div className="card"><p>Laden...</p></div>
 
-  const topShortlegs = getTopShortlegs()
-  const topHighFinish = getTopHighFinish()
-  const topOneEighties = getTopOneEighties()
-  const topAverage = getTopAverage()
+  const sortedStats = getSortedStats()
+  const top3 = sortedStats.slice(0, 3)
+  const rest = sortedStats.slice(3)
+
+  const getValueLabel = () => {
+    if (activeTab === '180er') return 'Anzahl'
+    if (activeTab === 'shortlegs') return 'Darts'
+    if (activeTab === 'highFinish') return 'Punkte'
+    if (activeTab === 'average') return 'Average'
+    return 'Wert'
+  }
+
+  const getValue = (player) => {
+    if (activeTab === '180er') return player.oneEighties
+    if (activeTab === 'shortlegs') return player.shortlegs
+    if (activeTab === 'highFinish') return player.highFinish
+    if (activeTab === 'average') return player.bestOfTen
+    return 0
+  }
 
   return (
     <div>
       <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>📊 Statistiken</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-        
-        <div className="card">
-          <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>🏆 Top 3 Shortlegs</h3>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-            Bester Shortleg pro Spieler
-          </p>
-          {topShortlegs.length > 0 ? (
-            topShortlegs.map((player, index) => (
-              <div key={index} style={{ 
-                padding: '12px', 
-                background: 'var(--bg-secondary)', 
-                borderRadius: '8px', 
-                marginBottom: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: index === 0 ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ 
-                    fontSize: '24px', 
-                    fontWeight: 'bold',
-                    color: index === 0 ? 'var(--accent-primary)' : index === 1 ? '#a0aec0' : '#718096'
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </span>
-                  <strong>{player.name}</strong>
-                </div>
-                <span style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold',
-                  color: 'var(--accent-primary)'
-                }}>
-                  {player.shortlegs}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: 'var(--text-secondary)' }}>Noch keine Daten</p>
-          )}
-        </div>
-
-        <div className="card">
-          <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>🎯 Top 3 High Finish</h3>
-          {topHighFinish.length > 0 ? (
-            topHighFinish.map((player, index) => (
-              <div key={index} style={{ 
-                padding: '12px', 
-                background: 'var(--bg-secondary)', 
-                borderRadius: '8px', 
-                marginBottom: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: index === 0 ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ 
-                    fontSize: '24px', 
-                    fontWeight: 'bold',
-                    color: index === 0 ? 'var(--accent-primary)' : index === 1 ? '#a0aec0' : '#718096'
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </span>
-                  <strong>{player.name}</strong>
-                </div>
-                <span style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold',
-                  color: 'var(--accent-primary)'
-                }}>
-                  {player.highFinish}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: 'var(--text-secondary)' }}>Noch keine Daten</p>
-          )}
-        </div>
-
-        <div className="card">
-          <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>💯 Top 3 180er</h3>
-          {topOneEighties.length > 0 ? (
-            topOneEighties.map((player, index) => (
-              <div key={index} style={{ 
-                padding: '12px', 
-                background: 'var(--bg-secondary)', 
-                borderRadius: '8px', 
-                marginBottom: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: index === 0 ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ 
-                    fontSize: '24px', 
-                    fontWeight: 'bold',
-                    color: index === 0 ? 'var(--accent-primary)' : index === 1 ? '#a0aec0' : '#718096'
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </span>
-                  <strong>{player.name}</strong>
-                </div>
-                <span style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold',
-                  color: 'var(--accent-primary)'
-                }}>
-                  {player.oneEighties}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: 'var(--text-secondary)' }}>Noch keine Daten</p>
-          )}
-        </div>
-
-        <div className="card">
-          <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>📈 Top 3 Average</h3>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-            Bester Average pro Spieler
-          </p>
-          {topAverage.length > 0 ? (
-            topAverage.map((player, index) => (
-              <div key={index} style={{ 
-                padding: '12px', 
-                background: 'var(--bg-secondary)', 
-                borderRadius: '8px', 
-                marginBottom: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: index === 0 ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ 
-                    fontSize: '24px', 
-                    fontWeight: 'bold',
-                    color: index === 0 ? 'var(--accent-primary)' : index === 1 ? '#a0aec0' : '#718096'
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </span>
-                  <strong>{player.name}</strong>
-                </div>
-                <span style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold',
-                  color: 'var(--accent-primary)'
-                }}>
-                  {player.bestOfTen}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: 'var(--text-secondary)' }}>Noch keine Daten</p>
-          )}
+      {/* Tabs */}
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button 
+            className={activeTab === '180er' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveTab('180er')}
+            style={{ flex: '1', minWidth: '120px' }}
+          >
+            💯 180er
+          </button>
+          <button 
+            className={activeTab === 'shortlegs' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveTab('shortlegs')}
+            style={{ flex: '1', minWidth: '120px' }}
+          >
+            🏆 Shortlegs
+          </button>
+          <button 
+            className={activeTab === 'highFinish' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveTab('highFinish')}
+            style={{ flex: '1', minWidth: '120px' }}
+          >
+            🎯 High Finish
+          </button>
+          <button 
+            className={activeTab === 'average' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveTab('average')}
+            style={{ flex: '1', minWidth: '120px' }}
+          >
+            📈 Average
+          </button>
         </div>
       </div>
 
+      {/* Top 3 */}
+      {top3.length > 0 && (
+        <div className="card" style={{ marginBottom: '20px', background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
+          <h3 style={{ marginBottom: '16px', color: 'var(--accent-primary)' }}>🏆 Top 3</h3>
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {top3.map((player, index) => (
+              <div key={index} style={{ 
+                padding: '16px', 
+                background: 'var(--bg-secondary)', 
+                borderRadius: '12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                border: '2px solid var(--accent-primary)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span style={{ 
+                    fontSize: '32px',
+                    minWidth: '50px',
+                    textAlign: 'center'
+                  }}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                  </span>
+                  <strong style={{ fontSize: '18px' }}>{player.name}</strong>
+                </div>
+                <span style={{ 
+                  fontSize: '28px', 
+                  fontWeight: 'bold',
+                  color: 'var(--accent-primary)'
+                }}>
+                  {getValue(player)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Alle Spieler */}
       <div className="card">
-        <h3 style={{ marginBottom: '20px' }}>Alle Spieler-Statistiken</h3>
+        <h3 style={{ marginBottom: '16px' }}>
+          {activeTab === '180er' && 'Bestleistungen 180er'}
+          {activeTab === 'shortlegs' && 'Bestleistungen Shortlegs'}
+          {activeTab === 'highFinish' && 'Bestleistungen High Finish'}
+          {activeTab === 'average' && 'Bestleistungen Average'}
+        </h3>
         <div style={{ overflowX: 'auto' }}>
           <table>
             <thead>
               <tr>
+                <th>Platz</th>
+                <th>{getValueLabel()}</th>
                 <th>Spieler</th>
-                <th>Bester Shortleg</th>
-                <th>180er (Gesamt)</th>
-                <th>High Finish</th>
-                <th>Bester Ø</th>
               </tr>
             </thead>
             <tbody>
-              {stats.map((player, index) => (
-                <tr key={index}>
-                  <td><strong>{player.name}</strong></td>
-                  <td>{player.shortlegs || '-'}</td>
-                  <td>{player.oneEighties}</td>
-                  <td>{player.highFinish || '-'}</td>
-                  <td>{player.bestOfTen || '-'}</td>
+              {sortedStats.map((player, index) => (
+                <tr key={index} style={{ 
+                  background: index < 3 ? 'rgba(255,51,102,0.05)' : 'transparent'
+                }}>
+                  <td><strong>{index + 1}</strong></td>
+                  <td><strong style={{ color: 'var(--accent-primary)' }}>{getValue(player)}</strong></td>
+                  <td>{player.name}</td>
                 </tr>
               ))}
+              {sortedStats.length === 0 && (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    Noch keine Daten
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
