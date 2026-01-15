@@ -159,6 +159,114 @@ function Statistiken() {
     <div>
       <h2 style={{ marginBottom: '24px', fontSize: '32px' }}>📊 Statistiken</h2>
       
+      {/* Top 3 für alle Kategorien */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        
+        {/* Top 3 180er */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
+          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>💯 Top 3 180er</h3>
+          {stats.filter(p => p.oneEighties > 0).sort((a, b) => b.oneEighties - a.oneEighties).slice(0, 3).map((player, index) => (
+            <div key={index} style={{ 
+              padding: '12px', 
+              background: 'var(--bg-secondary)', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '20px' }}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                </span>
+                <strong style={{ fontSize: '14px' }}>{player.name}</strong>
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                {player.oneEighties}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Top 3 Shortlegs */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
+          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>🏆 Top 3 Shortlegs</h3>
+          {stats.filter(p => p.shortlegs > 0).sort((a, b) => a.shortlegs - b.shortlegs).slice(0, 3).map((player, index) => (
+            <div key={index} style={{ 
+              padding: '12px', 
+              background: 'var(--bg-secondary)', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '20px' }}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                </span>
+                <strong style={{ fontSize: '14px' }}>{player.name}</strong>
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                {player.shortlegs}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Top 3 High Finish */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
+          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>🎯 Top 3 High Finish</h3>
+          {stats.filter(p => p.highFinish > 0).sort((a, b) => b.highFinish - a.highFinish).slice(0, 3).map((player, index) => (
+            <div key={index} style={{ 
+              padding: '12px', 
+              background: 'var(--bg-secondary)', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '20px' }}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                </span>
+                <strong style={{ fontSize: '14px' }}>{player.name}</strong>
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                {player.highFinish}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Top 3 Average */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
+          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>📈 Top 3 Average</h3>
+          {stats.filter(p => p.bestOfTen > 0).sort((a, b) => b.bestOfTen - a.bestOfTen).slice(0, 3).map((player, index) => (
+            <div key={index} style={{ 
+              padding: '12px', 
+              background: 'var(--bg-secondary)', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '20px' }}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                </span>
+                <strong style={{ fontSize: '14px' }}>{player.name}</strong>
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                {player.bestOfTen}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -193,45 +301,7 @@ function Statistiken() {
         </div>
       </div>
 
-      {/* Top 3 */}
-      {top3.length > 0 && (
-        <div className="card" style={{ marginBottom: '20px', background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
-          <h3 style={{ marginBottom: '16px', color: 'var(--accent-primary)' }}>🏆 Top 3</h3>
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {top3.map((player, index) => (
-              <div key={index} style={{ 
-                padding: '16px', 
-                background: 'var(--bg-secondary)', 
-                borderRadius: '12px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: '2px solid var(--accent-primary)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span style={{ 
-                    fontSize: '32px',
-                    minWidth: '50px',
-                    textAlign: 'center'
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </span>
-                  <strong style={{ fontSize: '18px' }}>{player.name}</strong>
-                </div>
-                <span style={{ 
-                  fontSize: '28px', 
-                  fontWeight: 'bold',
-                  color: 'var(--accent-primary)'
-                }}>
-                  {getValue(player)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Alle Spieler */}
+      {/* Vollständige Liste */}
       <div className="card">
         <h3 style={{ marginBottom: '16px' }}>
           {activeTab === '180er' && 'Bestleistungen 180er'}
