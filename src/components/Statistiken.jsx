@@ -5,7 +5,7 @@ import { db } from '../firebase'
 function Statistiken() {
   const [stats, setStats] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('180er') // 180er, shortlegs, highFinish, average
+  const [activeTab, setActiveTab] = useState('180er') // 180er, shortlegs, highFinish, average, seasonAverage
 
   useEffect(() => {
     loadStats()
@@ -25,10 +25,12 @@ function Statistiken() {
         
         playerStats[doc.id] = {
           name: data.name,
-          shortlegs: 0,      // Bester (kleinster) Wert
-          oneEighties: 0,    // Summe
-          highFinish: 0,     // Bester (höchster) Wert
-          bestOfTen: 0       // Bester (höchster) Wert
+          shortlegs: 0,         // Bester (kleinster) Wert
+          oneEighties: 0,       // Summe
+          highFinish: 0,        // Bester (höchster) Wert
+          bestOfTen: 0,         // Bester (höchster) Wert
+          averageTotal: 0,      // Für Durchschnitts-Average
+          averageCount: 0       // Anzahl Spiele für Durchschnitt
         }
       })
       
@@ -68,6 +70,9 @@ function Statistiken() {
               playerStats[match.player1Id].bestOfTen,
               stats.bestOfTen
             )
+            // Für Durchschnitts-Average
+            playerStats[match.player1Id].averageTotal += stats.bestOfTen
+            playerStats[match.player1Id].averageCount += 1
           }
         }
         
@@ -102,11 +107,19 @@ function Statistiken() {
               playerStats[match.player2Id].bestOfTen,
               stats.bestOfTen
             )
+            // Für Durchschnitts-Average
+            playerStats[match.player2Id].averageTotal += stats.bestOfTen
+            playerStats[match.player2Id].averageCount += 1
           }
         }
       })
       
-      const statsData = Object.values(playerStats)
+      const statsData = Object.values(playerStats).map(p => ({
+        ...p,
+        seasonAverage: p.averageCount > 0 
+          ? Math.round((p.averageTotal / p.averageCount) * 10) / 10 
+          : 0
+      }))
       setStats(statsData)
     } catch (err) {
       console.error('Fehler beim Laden der Statistiken:', err)
@@ -121,6 +134,7 @@ function Statistiken() {
       if (activeTab === 'shortlegs') return p.shortlegs > 0
       if (activeTab === 'highFinish') return p.highFinish > 0
       if (activeTab === 'average') return p.bestOfTen > 0
+      if (activeTab === 'seasonAverage') return p.seasonAverage > 0
       return false
     })
 
@@ -129,6 +143,7 @@ function Statistiken() {
       if (activeTab === 'shortlegs') return a.shortlegs - b.shortlegs // Kleiner = besser
       if (activeTab === 'highFinish') return b.highFinish - a.highFinish
       if (activeTab === 'average') return b.bestOfTen - a.bestOfTen
+      if (activeTab === 'seasonAverage') return b.seasonAverage - a.seasonAverage
       return 0
     })
   }
@@ -143,7 +158,8 @@ function Statistiken() {
     if (activeTab === '180er') return 'Anzahl'
     if (activeTab === 'shortlegs') return 'Darts'
     if (activeTab === 'highFinish') return 'Punkte'
-    if (activeTab === 'average') return 'Average'
+    if (activeTab === 'average') return 'Bester Ø'
+    if (activeTab === 'seasonAverage') return 'Season Ø'
     return 'Wert'
   }
 
@@ -152,6 +168,7 @@ function Statistiken() {
     if (activeTab === 'shortlegs') return player.shortlegs
     if (activeTab === 'highFinish') return player.highFinish
     if (activeTab === 'average') return player.bestOfTen
+    if (activeTab === 'seasonAverage') return player.seasonAverage
     return 0
   }
 
@@ -242,7 +259,7 @@ function Statistiken() {
 
         {/* Top 3 Average */}
         <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
-          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>📈 Top 3 Average</h3>
+          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>📈 Top 3 Bester Ø</h3>
           {stats.filter(p => p.bestOfTen > 0).sort((a, b) => b.bestOfTen - a.bestOfTen).slice(0, 3).map((player, index) => (
             <div key={index} style={{ 
               padding: '12px', 
@@ -261,6 +278,32 @@ function Statistiken() {
               </div>
               <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
                 {player.bestOfTen}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Top 3 Season Average */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(255,51,102,0.1), rgba(255,51,102,0.05))', border: '2px solid var(--accent-primary)' }}>
+          <h3 style={{ marginBottom: '16px', fontSize: '18px', color: 'var(--accent-primary)' }}>📊 Top 3 Season Ø</h3>
+          {stats.filter(p => p.seasonAverage > 0).sort((a, b) => b.seasonAverage - a.seasonAverage).slice(0, 3).map((player, index) => (
+            <div key={index} style={{ 
+              padding: '12px', 
+              background: 'var(--bg-secondary)', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '20px' }}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                </span>
+                <strong style={{ fontSize: '14px' }}>{player.name}</strong>
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                {player.seasonAverage}
               </span>
             </div>
           ))}
@@ -296,7 +339,14 @@ function Statistiken() {
             onClick={() => setActiveTab('average')}
             style={{ flex: '1', minWidth: '120px' }}
           >
-            📈 Average
+            📈 Bester Ø
+          </button>
+          <button 
+            className={activeTab === 'seasonAverage' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveTab('seasonAverage')}
+            style={{ flex: '1', minWidth: '120px' }}
+          >
+            📊 Season Ø
           </button>
         </div>
       </div>
@@ -307,7 +357,8 @@ function Statistiken() {
           {activeTab === '180er' && 'Bestleistungen 180er'}
           {activeTab === 'shortlegs' && 'Bestleistungen Shortlegs'}
           {activeTab === 'highFinish' && 'Bestleistungen High Finish'}
-          {activeTab === 'average' && 'Bestleistungen Average'}
+          {activeTab === 'average' && 'Bestleistungen Bester Average'}
+          {activeTab === 'seasonAverage' && 'Bestleistungen Season Average'}
         </h3>
         <div style={{ overflowX: 'auto' }}>
           <table>
