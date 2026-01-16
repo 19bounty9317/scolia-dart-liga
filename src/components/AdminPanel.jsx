@@ -18,6 +18,18 @@ function AdminPanel({ user }) {
   const [editingMatch, setEditingMatch] = useState(null)
   const [editPlayer1Legs, setEditPlayer1Legs] = useState('')
   const [editPlayer2Legs, setEditPlayer2Legs] = useState('')
+  const [editPlayer1Stats, setEditPlayer1Stats] = useState({
+    shortlegs: 0,
+    oneEighties: 0,
+    highFinish: 0,
+    bestOfTen: 0
+  })
+  const [editPlayer2Stats, setEditPlayer2Stats] = useState({
+    shortlegs: 0,
+    oneEighties: 0,
+    highFinish: 0,
+    bestOfTen: 0
+  })
 
   useEffect(() => {
     checkAdmin()
@@ -194,6 +206,8 @@ function AdminPanel({ user }) {
     setEditingMatch(match)
     setEditPlayer1Legs(match.player1Legs?.toString() || '0')
     setEditPlayer2Legs(match.player2Legs?.toString() || '0')
+    setEditPlayer1Stats(match.player1Stats || { shortlegs: 0, oneEighties: 0, highFinish: 0, bestOfTen: 0 })
+    setEditPlayer2Stats(match.player2Stats || { shortlegs: 0, oneEighties: 0, highFinish: 0, bestOfTen: 0 })
   }
 
   const handleSaveMatchResult = async () => {
@@ -224,13 +238,17 @@ function AdminPanel({ user }) {
         player2LegsSubmitted: legs2,
         player1Submitted: !isReset,
         player2Submitted: !isReset,
-        confirmed: !isReset
+        confirmed: !isReset,
+        player1Stats: isReset ? null : editPlayer1Stats,
+        player2Stats: isReset ? null : editPlayer2Stats
       })
       
       alert(isReset ? 'Spiel zurückgesetzt!' : 'Ergebnis gespeichert und bestätigt!')
       setEditingMatch(null)
       setEditPlayer1Legs('')
       setEditPlayer2Legs('')
+      setEditPlayer1Stats({ shortlegs: 0, oneEighties: 0, highFinish: 0, bestOfTen: 0 })
+      setEditPlayer2Stats({ shortlegs: 0, oneEighties: 0, highFinish: 0, bestOfTen: 0 })
       await loadData()
     } catch (err) {
       console.error('Fehler:', err)
@@ -574,6 +592,123 @@ function AdminPanel({ user }) {
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
                       Best of 10: Gültige Ergebnisse sind 6:0 bis 6:5 (oder umgekehrt) und 5:5. Setze auf 0:0 zum Zurücksetzen.
                     </p>
+                    
+                    {/* Statistiken für Player 1 */}
+                    <div style={{ marginTop: '20px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                      <h4 style={{ marginBottom: '12px', color: 'var(--accent-primary)' }}>
+                        Statistiken {match.player1Name}
+                      </h4>
+                      <div style={{ display: 'grid', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            Shortleg (Darts)
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer1Stats.shortlegs}
+                            onChange={(e) => setEditPlayer1Stats({ ...editPlayer1Stats, shortlegs: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            180er
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer1Stats.oneEighties}
+                            onChange={(e) => setEditPlayer1Stats({ ...editPlayer1Stats, oneEighties: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            High Finish
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer1Stats.highFinish}
+                            onChange={(e) => setEditPlayer1Stats({ ...editPlayer1Stats, highFinish: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            max="170"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            Average
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer1Stats.bestOfTen}
+                            onChange={(e) => setEditPlayer1Stats({ ...editPlayer1Stats, bestOfTen: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Statistiken für Player 2 */}
+                    <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                      <h4 style={{ marginBottom: '12px', color: 'var(--accent-primary)' }}>
+                        Statistiken {match.player2Name}
+                      </h4>
+                      <div style={{ display: 'grid', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            Shortleg (Darts)
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer2Stats.shortlegs}
+                            onChange={(e) => setEditPlayer2Stats({ ...editPlayer2Stats, shortlegs: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            180er
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer2Stats.oneEighties}
+                            onChange={(e) => setEditPlayer2Stats({ ...editPlayer2Stats, oneEighties: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            High Finish
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer2Stats.highFinish}
+                            onChange={(e) => setEditPlayer2Stats({ ...editPlayer2Stats, highFinish: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            max="170"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                            Average
+                          </label>
+                          <input
+                            type="number"
+                            value={editPlayer2Stats.bestOfTen}
+                            onChange={(e) => setEditPlayer2Stats({ ...editPlayer2Stats, bestOfTen: parseInt(e.target.value) || 0 })}
+                            min="0"
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                       <button className="btn btn-primary" onClick={handleSaveMatchResult}>
                         Speichern
