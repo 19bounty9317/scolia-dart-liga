@@ -590,7 +590,7 @@ function AdminPanel({ user }) {
                       </div>
                     </div>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                      Best of 10: Gültige Ergebnisse sind 6:0 bis 6:5 (oder umgekehrt) und 5:5. Setze auf 0:0 zum Zurücksetzen.
+                      Best of 10: Spiel endet bei 6 Legs (z.B. 6:0, 6:1, 6:3) oder 5:5 unentschieden. Setze auf 0:0 zum Zurücksetzen.
                     </p>
                     
                     {/* Statistiken für Player 1 */}
