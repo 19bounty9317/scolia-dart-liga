@@ -829,6 +829,36 @@ function AdminPanel({ user }) {
                   <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '18px' }}>
                     ✓ Bestätigt: {match.player1Legs}:{match.player2Legs}
                   </span>
+                  {/* Stats anzeigen */}
+                  {(match.player1Stats || match.player2Stats) && (
+                    <div style={{ marginTop: '12px', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
+                      <p style={{ fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-secondary)' }}>Statistiken:</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {match.player1Stats && (
+                          <div>
+                            <strong style={{ color: 'var(--accent-primary)' }}>{match.player1Name}:</strong>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                              SL: {match.player1Stats.shortlegs || 0} | 
+                              180: {match.player1Stats.oneEighties || 0} | 
+                              HF: {match.player1Stats.highFinish || 0} | 
+                              Avg: {match.player1Stats.bestOfTen || 0}
+                            </div>
+                          </div>
+                        )}
+                        {match.player2Stats && (
+                          <div>
+                            <strong style={{ color: 'var(--accent-primary)' }}>{match.player2Name}:</strong>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                              SL: {match.player2Stats.shortlegs || 0} | 
+                              180: {match.player2Stats.oneEighties || 0} | 
+                              HF: {match.player2Stats.highFinish || 0} | 
+                              Avg: {match.player2Stats.bestOfTen || 0}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
